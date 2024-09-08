@@ -1,25 +1,14 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import Header from './Header';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import Header  from './Header';
 
 const HomeScreen = () => {
   return (
     <View style={styles.container}>
-     <Header/>
       <View style={styles.header}>
-        <Image source={{ uri: 'URL_DE_TU_IMAGEN_DE_PERFIL' }} style={styles.profileImage} />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>Donald Arguello Lopez Obando</Text>
-          <Text style={styles.userLocation}>CMCD Rosa Cerda, KM 97 Carretera al Rama, Boaco</Text>
-          <Text style={styles.userContact}>365 - 2309 - 1200A</Text>
-        </View>
-        <View style={styles.bloodType}>
-          <Text style={styles.bloodTypeText}>A+</Text>
-        </View>
+      <Header/>
       </View>
-
-      {/* Event Notification */}
-      <View style={styles.notificationContainer}>
+      <View style={styles.notificationsContainer}>
         <Text style={styles.notificationText}>Evento Disponible</Text>
         <View style={styles.notificationButtons}>
           <TouchableOpacity style={styles.cancelButton}>
@@ -29,32 +18,42 @@ const HomeScreen = () => {
             <Text style={styles.buttonText}>Aceptar</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity style={styles.redvitaButton}>
+          <Text style={styles.redvitaText}>Redvita</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Emergency Section */}
-      <View style={styles.emergencyContainer}>
+      {/* Contenedor de la imagen */}
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.placeholderImage} />
+      </View>
+
+      {/* Contenedor de la tarjeta de emergencia */}
+      <View style={styles.emergencyCard}>
         <Text style={styles.emergencyText}>EMERGENCIA</Text>
-        <Image source={{ uri: 'URL_DE_TU_ICONO_DE_EMERGENCIA' }} style={styles.emergencyIcon} />
-      </View>
-
-      {/* Invite Section */}
-      <View style={styles.inviteContainer}>
-        <Text style={styles.inviteText}>Redvita</Text>
-        <TouchableOpacity style={styles.inviteButton}>
-          <Text style={styles.buttonText}>IR</Text>
+        <TouchableOpacity style={styles.emergencyButton}>
+          <Text style={styles.buttonIcon}>🚨</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Navigation */}
-      <View style={styles.navigation}>
-        <TouchableOpacity style={styles.navButton}>
-          <Image source={{ uri: 'URL_ICONO_INICIO' }} style={styles.navIcon} />
+      {/* Redvita botón */}
+      <TouchableOpacity style={styles.redvitaInviteButton}>
+        <Text style={styles.redvitaInviteText}>Redvita te invita a compartir con tus amigos</Text>
+        <TouchableOpacity style={styles.irButton}>
+          <Text style={styles.irText}>IR</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Image source={{ uri: 'URL_ICONO_HISTORIAL' }} style={styles.navIcon} />
+      </TouchableOpacity>
+
+      {/* Footer con los botones */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.footerButton}>
+          <Text style={styles.footerText}>Inicio</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Image source={{ uri: 'URL_ICONO_CONSULTAR' }} style={styles.navIcon} />
+        <TouchableOpacity style={styles.footerButton}>
+          <Text style={styles.footerText}>Historial</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerButton}>
+          <Text style={styles.footerText}>Consultar</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -63,121 +62,122 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop:30,
     flex: 1,
-    backgroundColor: '#f4f4f4',
-    padding: 10,
+    backgroundColor: '#f5f5f5',
   },
-  header: {
-    flexDirection: 'row',
+header:{
+flex:1,
+marginTop:30,
+},
+
+  notificationsContainer: {
+    flex:1,
+    backgroundColor: '#e0e0e0',
+    padding: 10,
     alignItems: 'center',
-    marginVertical: 10,
-    marginHorizontal:111,
-  },
-  profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 10,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userLocation: {
-    fontSize: 12,
-    color: '#777',
-  },
-  userContact: {
-    fontSize: 12,
-    color: '#777',
-  },
-  bloodType: {
-    backgroundColor: '#FFAAAA',
-    padding: 10,
-    borderRadius: 5,
-  },
-  bloodTypeText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  notificationContainer: {
-    backgroundColor: '#e0f7fa',
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 10,
   },
   notificationText: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5,
   },
   notificationButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginTop: 5,
   },
   cancelButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#ff4d4d',
     padding: 10,
+    margin: 5,
     borderRadius: 5,
   },
   acceptButton: {
     backgroundColor: '#4caf50',
     padding: 10,
+    margin: 5,
     borderRadius: 5,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    textAlign: 'center',
   },
-  emergencyContainer: {
-    backgroundColor: '#FF5252',
-    padding: 15,
+  redvitaButton: {
+    backgroundColor: '#ff0000',
+    padding: 10,
     borderRadius: 5,
+    marginTop: 10,
+  },
+  redvitaText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    flex:3,
+    height: 150,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: 20,
+  },
+  placeholderImage: {
+    width: 100,
+    height: 100,
+    resizeMode: 'cover',
+  },
+  emergencyCard: {
+    backgroundColor: '#ff4d4d',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    margin: 20,
+    borderRadius: 5,
   },
   emergencyText: {
     color: '#fff',
-    fontSize: 20,
     fontWeight: 'bold',
+    fontSize: 18,
   },
-  emergencyIcon: {
-    width: 30,
-    height: 30,
-    marginTop: 10,
-  },
-  inviteContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-  },
-  inviteText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  inviteButton: {
-    backgroundColor: '#00bcd4',
+  emergencyButton: {
+    backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
   },
-  navigation: {
+  buttonIcon: {
+    fontSize: 24,
+  },
+  redvitaInviteButton: {
+    backgroundColor: '#e0e0e0',
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    margin: 10,
+    borderRadius: 5,
+  },
+  redvitaInviteText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  irButton: {
+    backgroundColor: '#ccc',
+    padding: 5,
+    borderRadius: 5,
+  },
+  irText: {
+    color: '#000',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
   },
-  navButton: {
+  footerButton: {
     alignItems: 'center',
   },
-  navIcon: {
-    width: 30,
-    height: 30,
+  footerText: {
+    color: '#333',
+    fontWeight: 'bold',
   },
 });
 

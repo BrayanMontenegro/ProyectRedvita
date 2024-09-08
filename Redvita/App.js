@@ -7,7 +7,7 @@ import Registro from './componet/Registro';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Registro />
+      <HomeScreen />
       <StatusBar style="auto" />
     </View>
   );
