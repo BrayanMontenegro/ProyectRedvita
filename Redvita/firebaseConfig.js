@@ -1,13 +1,12 @@
-// Import the functions you need from the SDKs you need
+// firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-export const firebaseConfig = {
-apiKey: "AIzaSyDlP61SzP_X-HfJn32smEEedmzWUQIWQlI",
+// Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDlP61SzP_X-HfJn32smEEedmzWUQIWQlI",
   authDomain: "redvita-3a00a.firebaseapp.com",
   projectId: "redvita-3a00a",
   storageBucket: "redvita-3a00a.appspot.com",
@@ -16,7 +15,15 @@ apiKey: "AIzaSyDlP61SzP_X-HfJn32smEEedmzWUQIWQlI",
   measurementId: "G-4F8J2PDHQH"
 };
 
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 
+// Inicializa Firestore
 export const db = getFirestore(app);
 
+// Inicializa Auth con persistencia utilizando AsyncStorage
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
+
+export { auth };
