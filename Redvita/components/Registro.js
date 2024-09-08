@@ -19,8 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Dimensions } from 'react-native';
-import { db } from '../firebaseConfig'; // Importar configuración de Firebase
+import { auth, db } from '../firebaseConfig'; // Importa configuración de Firebase
 import { collection, addDoc } from 'firebase/firestore'; // Importar métodos de Firestore
+import { createUserWithEmailAndPassword } from 'firebase/auth'; // Importar método de autenticación
 
 const { width, height } = Dimensions.get('window');
 
@@ -147,7 +148,6 @@ export default function RegistroUsuario({ navigation }) {
   };
 
   const handleNext = () => {
-    // Solo abrir el modal sin validar el número de cédula
     if (validateInputs()) {
       setModalVisible(true);
     }
@@ -155,9 +155,19 @@ export default function RegistroUsuario({ navigation }) {
 
   const handleSaveCredentials = async () => {
     if (validateCredentials()) {
-      // Guardar los datos en Firebase
       try {
+        // Registrar al usuario en Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          userData.correoElectronico,
+          userData.contraseña
+        );
+
+        const user = userCredential.user;
+
+        // Guardar información adicional en Firestore
         await addDoc(collection(db, 'usuarios'), {
+          uid: user.uid, // Guardar el UID del usuario para referencia
           ...userData,
           ...credentials,
         });
@@ -166,14 +176,22 @@ export default function RegistroUsuario({ navigation }) {
         setModalVisible(false);
         setButtonText('Finalizar registro');
       } catch (e) {
-        console.error('Error al guardar en Firestore: ', e);
-        Alert.alert('Error', 'Hubo un problema al guardar los datos.');
+        console.error('Error al guardar en Firebase: ', e);
+
+        if (e.code === 'auth/email-already-in-use') {
+          Alert.alert('Error', 'El correo electrónico ya está en uso.');
+        } else if (e.code === 'auth/invalid-email') {
+          Alert.alert('Error', 'El correo electrónico no es válido.');
+        } else if (e.code === 'auth/weak-password') {
+          Alert.alert('Error', 'La contraseña es muy débil.');
+        } else {
+          Alert.alert('Error', 'Hubo un problema al guardar los datos.');
+        }
       }
     }
   };
 
   const clearFields = () => {
-    // Limpiar todos los campos de entrada
     setUserData({
       nombres: '',
       apellidos: '',
@@ -237,7 +255,6 @@ export default function RegistroUsuario({ navigation }) {
                 onChangeText={(value) => handleInputChange(field, value)}
                 value={userData[field]}
               />
-              {/* Icono para mostrar/ocultar contraseña */}
               {field === 'contraseña' && (
                 <TouchableOpacity
                   style={styles.showPasswordIcon}
@@ -339,88 +356,87 @@ export default function RegistroUsuario({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FFFFFF',
-    padding: width * 0.05,
+    alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   logo: {
     width: width * 0.8,
-    height: (width * 0.8 * 526) / 2226,
-    alignSelf: 'center',
-    marginBottom: height * 0.02,
+    height: height * 0.1,
+    marginBottom: 20,
   },
   title: {
-    fontSize: width * 0.06,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: height * 0.02,
+    marginBottom: 20,
   },
   imageContainer: {
-    alignSelf: 'center',
-    marginBottom: height * 0.02,
-    width: width * 0.6,
-    height: height * 0.2,
-    borderRadius: 10,
-    backgroundColor: '#e0e0e0',
+    marginBottom: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   profileImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
   },
   placeholder: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   placeholderText: {
-    color: '#999',
+    color: '#aaa',
   },
   inputContainer: {
-    marginBottom: height * 0.015,
-    position: 'relative',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#00ABB3',
-    borderRadius: 5,
-    padding: height * 0.02,
-    fontSize: width * 0.04,
+    width: '100%',
+    marginBottom: 15,
   },
   inputLabel: {
+    marginBottom: 5,
+    fontSize: 14,
+    color: '#888',
+  },
+  input: {
+    width: '100%',
+    height: 50,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 15,
+  },
+  showPasswordIcon: {
     position: 'absolute',
-    top: -10,
-    left: 10,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 5,
-    color: '#00ABB3',
-    fontSize: width * 0.035,
-    zIndex: 1,
+    right: 15,
+    top: 15,
+  },
+  icon: {
+    width: 20,
+    height: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: height * 0.03,
+    width: '100%',
+    marginTop: 20,
   },
   clearButton: {
-    backgroundColor: '#00ABB3',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.15,
+    backgroundColor: '#f44336',
+    padding: 15,
     borderRadius: 5,
   },
   finishButton: {
-    backgroundColor: '#EB1E26',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.15,
+    backgroundColor: '#4CAF50',
+    padding: 15,
     borderRadius: 5,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    color: '#fff',
+    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -429,43 +445,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+    width: '80%',
+    backgroundColor: '#fff',
     borderRadius: 10,
-    elevation: 5,
+    padding: 20,
+  },
+  modalScroll: {
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#EB1E26',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalScroll: {
-    paddingBottom: height * 0.02,
+    marginBottom: 10,
   },
   dateButton: {
-    borderWidth: 1,
-    borderColor: '#00ABB3',
+    backgroundColor: '#eee',
+    padding: 10,
     borderRadius: 5,
-    padding: height * 0.02,
-    marginBottom: height * 0.015,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  showPasswordIcon: {
-    position: 'absolute',
-    right: 10,
-    top: height * 0.02,
-  },
-  icon: {
-    width: 20,
-    height: 20,
+    marginVertical: 10,
   },
   picker: {
-    height: 50,
     width: '100%',
-    marginBottom: height * 0.015,
+    height: 50,
   },
 });
