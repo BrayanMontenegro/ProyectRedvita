@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import { getStorage } from "firebase/storage"; // Importa Firebase Storage
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuración de Firebase
@@ -9,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDlP61SzP_X-HfJn32smEEedmzWUQIWQlI",
   authDomain: "redvita-3a00a.firebaseapp.com",
   projectId: "redvita-3a00a",
-  storageBucket: "redvita-3a00a.appspot.com",
+  storageBucket: "redvita-3a00a.appspot.com", // Bucket para Firebase Storage
   messagingSenderId: "200488716951",
   appId: "1:200488716951:web:c87501d50632bb7765f7d2",
   measurementId: "G-4F8J2PDHQH"
@@ -25,5 +26,8 @@ export const db = getFirestore(app);
 const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
+
+// Inicializa Firebase Storage
+export const storage = getStorage(app); // Añadimos Firebase Storage
 
 export { auth };
