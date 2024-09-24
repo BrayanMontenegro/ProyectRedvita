@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { StyleSheet } from 'react-native';
 import {
   View,
@@ -10,21 +10,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Alert,
   Modal,
-  Button,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import { Dimensions } from "react-native";
 import { auth, db, storage } from "../firebaseConfig";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const { width, height } = Dimensions.get("window");
 
+// Debounce function to delay the execution of queries
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -57,16 +58,17 @@ export default function RegistroUsuario({ navigation }) {
 
   const [inputFocus, setInputFocus] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
-  const [buttonText, setButtonText] = useState("Siguiente");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   const [userError, setUserError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [cedulaError, setCedulaError] = useState("");
   const [formError, setFormError] = useState("");
-  const [credencialesError, setCredencialesError] = useState("");
+  const [loading, setLoading] = useState(false); // Estado para manejar la carga
+  const [progress, setProgress] = useState(0);   // Progreso de la carga
 
   const clearFields = () => {
     setUserData({
@@ -87,8 +89,155 @@ export default function RegistroUsuario({ navigation }) {
       genero: "",
     });
     setSelectedPhoto(null);
+    setUserError("");
+    setEmailError("");
+    setCedulaError("");
+    setFormError("");
   };
 
+  // Función para formatear la cédula al estilo ###-######-#####
+  const formatCedula = (value) => {
+    value = value.replace(/[^0-9A-Za-z]/g, ""); // Remover todo menos números y letras
+    if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3); // Añadir primer guion
+    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10); // Añadir segundo guion
+    return value.slice(0, 16); // Limitar a 16 caracteres, incluyendo letras al final
+  };
+
+  // Verificar si la cédula ya existe en Firestore
+  const checkCedulaInFirestore = async (value) => {
+    const cedulaSnapshot = await getDocs(
+      query(collection(db, "usuarios"), where("numeroCedula", "==", value))
+    );
+    if (!cedulaSnapshot.empty) {
+      setCedulaError("La cédula ya está registrada.");
+    } else {
+      setCedulaError("");
+    }
+  };
+
+  // Verificar si el correo electrónico ya existe en Firestore
+  const checkEmailInFirestore = async (value) => {
+    const emailSnapshot = await getDocs(
+      query(collection(db, "usuarios"), where("correoElectronico", "==", value))
+    );
+    if (!emailSnapshot.empty) {
+      setEmailError("El correo electrónico ya está registrado.");
+    } else {
+      setEmailError("");
+    }
+  };
+
+  const debouncedCheckCedula = useMemo(() => debounce(checkCedulaInFirestore, 500), []);
+  const debouncedCheckEmail = useMemo(() => debounce(checkEmailInFirestore, 500), []);
+
+  // Manejo de cambios en los campos de credenciales, aplicando el formato de cédula
+  const handleCredentialsChange = (field, value) => {
+    if (field === "numeroCedula") {
+      value = formatCedula(value);
+      debouncedCheckCedula(value); // Validar si la cédula ya existe
+    }
+    setCredentials({ ...credentials, [field]: value });
+  };
+
+  // Manejo de cambios en los campos del usuario
+  const handleInputChange = (field, value) => {
+    if (field === "correoElectronico") {
+      debouncedCheckEmail(value); // Validar si el correo ya existe
+    }
+    setUserData({ ...userData, [field]: value });
+  };
+
+  // Verificar que el formulario sea válido antes de continuar
+  const validateForm = () => {
+    const { nombres, apellidos, nombreUsuario, correoElectronico, contraseña } = userData;
+    if (!nombres || !apellidos || !nombreUsuario || !correoElectronico || !contraseña) {
+      setFormError("Todos los campos son obligatorios.");
+      return false;
+    }
+    return true;
+  };
+
+  // Deshabilitar el botón "Siguiente" si hay errores en cédula o correo
+  const isNextButtonDisabled = useMemo(() => {
+    return cedulaError || emailError || !validateForm();
+  }, [cedulaError, emailError, userData, credentials]);
+
+  // Deshabilitar el botón "Guardar" si la cédula está registrada
+  const isSaveButtonDisabled = useMemo(() => {
+    return cedulaError || loading;
+  }, [cedulaError, loading]);
+
+  // Guardar los datos en Firebase (solo cuando se presiona "Guardar" en el modal de credenciales)
+  const handleSaveCredentials = async () => {
+    setLoading(true); // Inicia la carga
+    try {
+      // Crear usuario con Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        userData.correoElectronico,
+        userData.contraseña
+      );
+      const user = userCredential.user;
+
+      let photoURL = ""; // Inicializamos la variable para la URL de la foto
+
+      // Si se seleccionó una foto, súbela a Firebase Storage
+      if (userData.fotoPerfil) {
+        const response = await fetch(userData.fotoPerfil);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `fotosPerfil/${user.uid}.jpg`);
+
+        // Usar `uploadBytesResumable` para obtener el progreso
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+
+        // Monitorear el progreso de la carga
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progressPercentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setProgress(progressPercentage); // Actualizar el progreso
+            },
+            (error) => {
+              console.log("Error al subir la imagen: ", error);
+              reject(error);
+            },
+            async () => {
+              // Obtener la URL de descarga de la imagen desde Firebase Storage
+              photoURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve();
+            }
+          );
+        });
+      }
+
+      // Guardar los datos del usuario en Firestore, incluyendo la URL de la foto de perfil si existe
+      await addDoc(collection(db, "usuarios"), {
+        uid: user.uid,
+        ...userData,
+        fotoPerfil: photoURL, // Guardar la URL de la foto en Firestore
+        ...credentials,
+      });
+
+      // Mostrar alerta de éxito y redirigir a la pantalla de login
+      Alert.alert("Registro Exitoso", "Los datos han sido guardados correctamente.", [
+        {
+          text: "OK",
+          onPress: () => {
+            setModalVisible(false);
+            setLoading(false); // Detener la carga
+            navigation.navigate("Login");
+          },
+        },
+      ]);
+    } catch (e) {
+      console.error("Error al guardar en Firebase: ", e);
+      Alert.alert("Error", "Hubo un problema al guardar los datos.");
+      setLoading(false); // Detener la carga en caso de error
+    }
+  };
+
+  // Función para seleccionar imagen
   const pickImage = async (fromCamera = false) => {
     let result;
     if (fromCamera) {
@@ -113,163 +262,6 @@ export default function RegistroUsuario({ navigation }) {
     setPhotoModalVisible(false);
   };
 
-  const checkUsernameInFirestore = async (value) => {
-    const userSnapshot = await getDocs(
-      query(collection(db, "usuarios"), where("nombreUsuario", "==", value))
-    );
-    if (!userSnapshot.empty) {
-      setUserError("El nombre de usuario ya está registrado.");
-    } else {
-      setUserError("");
-    }
-  };
-
-  const checkEmailInFirestore = async (value) => {
-    const emailSnapshot = await getDocs(
-      query(collection(db, "usuarios"), where("correoElectronico", "==", value))
-    );
-    if (!emailSnapshot.empty) {
-      setEmailError("El correo electrónico ya está registrado.");
-    } else {
-      setEmailError("");
-    }
-  };
-
-  const debouncedCheckUsername = debounce(checkUsernameInFirestore, 500);
-  const debouncedCheckEmail = debounce(checkEmailInFirestore, 500);
-
-  const handleInputChange = (field, value) => {
-    if (field === "nombreUsuario") {
-      const usernameRegex = /^[a-zA-Z0-9_]+$/;
-      if (!usernameRegex.test(value)) {
-        setUserError("El nombre de usuario solo puede contener letras, números y guion bajo.");
-      } else {
-        setUserError("");
-        debouncedCheckUsername(value);
-      }
-    }
-
-    if (field === "correoElectronico") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        setEmailError("Ingrese un correo electrónico válido.");
-      } else {
-        setEmailError("");
-        debouncedCheckEmail(value);
-      }
-    }
-
-    setUserData({ ...userData, [field]: value });
-  };
-
-  // Validar formulario de registro inicial
-  const validateForm = () => {
-    const { nombres, apellidos, nombreUsuario, correoElectronico, contraseña } = userData;
-    if (!nombres || !apellidos || !nombreUsuario || !correoElectronico || !contraseña) {
-      setFormError("Todos los campos son obligatorios.");
-      return false;
-    }
-    return true;
-  };
-
-  // Formatear la cédula al ingresar automáticamente con el formato ###-######-#####
-  const formatCedula = (value) => {
-    value = value.replace(/[^0-9A-Za-z]/g, ""); // Remover todo menos números y letras
-    if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3);
-    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10);
-    return value.slice(0, 16); // Limitar a 16 caracteres
-  };
-
-  // Validar formato de cédula y que solo se ingrese números en edad
-  const handleCredentialsChange = (field, value) => {
-    if (field === "numeroCedula") {
-      value = formatCedula(value);
-      setCredentials({ ...credentials, [field]: value });
-
-      if (value.length < 16) {
-        setCredencialesError("El formato de la cédula debe ser ###-######-#####");
-      } else {
-        setCredencialesError("");
-      }
-    } else if (field === "edad") {
-      if (isNaN(value) || value <= 0) {
-        setCredencialesError("La edad debe ser un número válido.");
-      } else {
-        setCredencialesError("");
-      }
-      setCredentials({ ...credentials, [field]: value });
-    } else {
-      // Permitir la edición de campos como "comunidad", "municipio" y "departamento"
-      setCredentials({ ...credentials, [field]: value });
-    }
-  };
-
-  const validateCredenciales = () => {
-    const { numeroCedula, departamento, edad, genero } = credentials;
-    if (!numeroCedula || !departamento || !edad || !genero) {
-      setCredencialesError("Todos los campos de credenciales son obligatorios.");
-      return false;
-    }
-    return true;
-  };
-
-  const handleNext = () => {
-    if (validateForm()) {
-      setFormError(""); // Limpiar mensaje de error
-      setModalVisible(true); // Mostrar el modal de credenciales
-    }
-  };
-
-  const handleSaveCredentials = async () => {
-    if (!validateCredenciales()) {
-      return;
-    }
-    // Guardar los datos de credenciales y usuario
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        userData.correoElectronico,
-        userData.contraseña
-      );
-      const user = userCredential.user;
-
-      let photoURL = "";
-
-      if (userData.fotoPerfil) {
-        const response = await fetch(userData.fotoPerfil);
-        const blob = await response.blob();
-
-        const photoRef = ref(storage, `fotosPerfil/${user.uid}.jpg`);
-        await uploadBytes(photoRef, blob);
-        photoURL = await getDownloadURL(photoRef);
-      }
-
-      await addDoc(collection(db, "usuarios"), {
-        uid: user.uid,
-        ...userData,
-        fotoPerfil: photoURL,
-        ...credentials,
-      });
-
-      Alert.alert("Registro Exitoso", "Los datos han sido guardados en Firebase.", [
-        {
-          text: "OK",
-          onPress: () => {
-            setModalVisible(false);
-            navigation.navigate("Login");
-          },
-        },
-      ]);
-    } catch (e) {
-      if (e.code === "auth/email-already-in-use") {
-        setEmailError("El correo electrónico ya está en uso.");
-      } else {
-        console.error("Error al guardar en Firebase: ", e);
-        Alert.alert("Error", "Hubo un problema al guardar los datos.");
-      }
-    }
-  };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <KeyboardAvoidingView
@@ -277,15 +269,16 @@ export default function RegistroUsuario({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: "center", padding: 20 }}>
-          {/* Logo de RedVita */}
+          {/* Logo */}
           <Image
-            source={require("../assets/logo_horizontal_con_slogan.png")} // Logo anterior
+            source={require("../assets/logo_horizontal_con_slogan.png")} 
             style={{ width: width * 0.8, height: height * 0.1, marginBottom: 20 }}
             resizeMode="contain"
           />
 
-          {/* Contenedor para la foto de perfil */}
+          {/* Foto de perfil */}
           <TouchableOpacity
+            disabled={loading} // Deshabilitar cuando esté guardando
             style={{ width: 150, height: 150, borderRadius: 75, overflow: "hidden", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#ddd", marginBottom: 20 }}
             onPress={() => setPhotoModalVisible(true)}
           >
@@ -301,62 +294,67 @@ export default function RegistroUsuario({ navigation }) {
           {/* Nombres */}
           <View style={{ width: "100%", marginBottom: 15, position: "relative" }}>
             {inputFocus["nombres"] || userData["nombres"] ? (
-              <Text style={{ position: "absolute", top: -10, left: 15, backgroundColor: "#FFFFFF", paddingHorizontal: 5, zIndex: 1, color: "#888", fontSize: 14 }}>Nombres</Text>
+              <Text style={styles.inputLabel}>Nombres</Text>
             ) : null}
             <TextInput
-              style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15 }}
+              style={styles.input}
               placeholder="Ingrese sus nombres"
               onFocus={() => setInputFocus({ ...inputFocus, nombres: true })}
               onBlur={() => setInputFocus({ ...inputFocus, nombres: false })}
               onChangeText={(value) => handleInputChange("nombres", value)}
-              value={userData["nombres"]}
+              value={userData.nombres}
+              editable={!loading} // Deshabilitar mientras se guarda
             />
           </View>
 
           {/* Apellidos */}
           <View style={{ width: "100%", marginBottom: 15, position: "relative" }}>
             {inputFocus["apellidos"] || userData["apellidos"] ? (
-              <Text style={{ position: "absolute", top: -10, left: 15, backgroundColor: "#FFFFFF", paddingHorizontal: 5, zIndex: 1, color: "#888", fontSize: 14 }}>Apellidos</Text>
+              <Text style={styles.inputLabel}>Apellidos</Text>
             ) : null}
             <TextInput
-              style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15 }}
+              style={styles.input}
               placeholder="Ingrese sus apellidos"
               onFocus={() => setInputFocus({ ...inputFocus, apellidos: true })}
               onBlur={() => setInputFocus({ ...inputFocus, apellidos: false })}
               onChangeText={(value) => handleInputChange("apellidos", value)}
-              value={userData["apellidos"]}
+              value={userData.apellidos}
+              editable={!loading} // Deshabilitar mientras se guarda
             />
           </View>
 
           {/* Nombre de usuario */}
           <View style={{ width: "100%", marginBottom: 15, position: "relative" }}>
             {inputFocus["nombreUsuario"] || userData["nombreUsuario"] ? (
-              <Text style={{ position: "absolute", top: -10, left: 15, backgroundColor: "#FFFFFF", paddingHorizontal: 5, zIndex: 1, color: "#888", fontSize: 14 }}>Nombre de usuario</Text>
+              <Text style={styles.inputLabel}>Nombre de usuario</Text>
             ) : null}
             <TextInput
-              style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15 }}
+              style={styles.input}
               placeholder="Ingrese un nombre de usuario"
+              maxLength={15} // Limitar a 15 caracteres
               onFocus={() => setInputFocus({ ...inputFocus, nombreUsuario: true })}
               onBlur={() => setInputFocus({ ...inputFocus, nombreUsuario: false })}
               onChangeText={(value) => handleInputChange("nombreUsuario", value)}
-              value={userData["nombreUsuario"]}
+              value={userData.nombreUsuario}
+              editable={!loading} // Deshabilitar mientras se guarda
             />
-            {userError ? <Text style={{ color: "red", fontSize: 12, marginTop: 5 }}>{userError}</Text> : null}
+            <Text style={styles.charCounter}>{userData.nombreUsuario.length}/15</Text>
           </View>
 
           {/* Correo electrónico */}
           <View style={{ width: "100%", marginBottom: 15, position: "relative" }}>
             {inputFocus["correoElectronico"] || userData["correoElectronico"] ? (
-              <Text style={{ position: "absolute", top: -10, left: 15, backgroundColor: "#FFFFFF", paddingHorizontal: 5, zIndex: 1, color: "#888", fontSize: 14 }}>Correo Electrónico</Text>
+              <Text style={styles.inputLabel}>Correo Electrónico</Text>
             ) : null}
             <TextInput
-              style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15 }}
+              style={styles.input}
               placeholder="Ingrese un correo electrónico"
               keyboardType="email-address"
               onFocus={() => setInputFocus({ ...inputFocus, correoElectronico: true })}
               onBlur={() => setInputFocus({ ...inputFocus, correoElectronico: false })}
               onChangeText={(value) => handleInputChange("correoElectronico", value)}
-              value={userData["correoElectronico"]}
+              value={userData.correoElectronico}
+              editable={!loading} // Deshabilitar mientras se guarda
             />
             {emailError ? <Text style={{ color: "red", fontSize: 12, marginTop: 5 }}>{emailError}</Text> : null}
           </View>
@@ -364,66 +362,65 @@ export default function RegistroUsuario({ navigation }) {
           {/* Contraseña */}
           <View style={{ width: "100%", marginBottom: 15, position: "relative", flexDirection: "row", alignItems: "center" }}>
             {inputFocus["contraseña"] || userData["contraseña"] ? (
-              <Text style={{ position: "absolute", top: -10, left: 15, backgroundColor: "#FFFFFF", paddingHorizontal: 5, zIndex: 1, color: "#888", fontSize: 14 }}>Contraseña</Text>
+              <Text style={styles.inputLabel}>Contraseña</Text>
             ) : null}
             <TextInput
-              style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15, flex: 1 }}
+              style={styles.input}
               placeholder="Ingrese su contraseña"
               secureTextEntry={!showPassword}
               onFocus={() => setInputFocus({ ...inputFocus, contraseña: true })}
               onBlur={() => setInputFocus({ ...inputFocus, contraseña: false })}
               onChangeText={(value) => handleInputChange("contraseña", value)}
               value={userData.contraseña}
+              editable={!loading} // Deshabilitar mientras se guarda
             />
             <TouchableOpacity
               style={{ position: "absolute", right: 15 }}
               onPress={() => setShowPassword(!showPassword)}
             >
               <Image
-                source={
-                  showPassword
-                    ? require("../icons/IconsRegistro/ver.png")
-                    : require("../icons/IconsRegistro/ocultar.png")
-                }
+                source={showPassword ? require("../icons/IconsRegistro/ver.png") : require("../icons/IconsRegistro/ocultar.png")}
                 style={{ width: 20, height: 20 }}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Error de validación del formulario */}
+          {/* Validación de formulario */}
           {formError ? <Text style={{ color: "red", fontSize: 12, marginTop: 5 }}>{formError}</Text> : null}
 
           {/* Botones */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 20 }}>
-            <TouchableOpacity
-              style={{ backgroundColor: "#f44336", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
-              onPress={clearFields}
-            >
-              <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>Vaciar Campos</Text>
+            <TouchableOpacity style={styles.clearButton} onPress={clearFields} disabled={loading}>
+              <Text style={styles.buttonText}>Vaciar Campos</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={{ backgroundColor: "#4CAF50", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
-              onPress={handleNext}
+              style={styles.saveButton}
+              onPress={() => setModalVisible(true)}
+              disabled={isNextButtonDisabled}
             >
-              <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>{buttonText}</Text>
+              <Text style={styles.buttonText}>Siguiente</Text>
             </TouchableOpacity>
           </View>
 
           {/* Modal para registro de credenciales */}
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="slide"
-          >
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
-              <View style={{ width: "90%", backgroundColor: "#fff", borderRadius: 10, padding: 20 }}>
+          <Modal visible={modalVisible} transparent={true} animationType="slide">
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
                 <ScrollView>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Registro de Credenciales</Text>
+                  <Text style={styles.modalTitle}>Registro de Credenciales</Text>
 
-                  {/* Campos de credenciales */}
+                  {/* Progreso durante el guardado */}
+                  {loading && (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="large" color="#4CAF50" />
+                      <Text style={styles.loadingText}>Guardando... {Math.round(progress)}%</Text>
+                    </View>
+                  )}
+
+                  {/* Selección de fecha de nacimiento */}
                   <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
-                    style={{ backgroundColor: "#eee", padding: 10, borderRadius: 5, marginVertical: 10 }}
+                    style={styles.dateButton}
                   >
                     <Text>
                       {credentials.fechaNacimiento ? credentials.fechaNacimiento : "Seleccionar Fecha de Nacimiento"}
@@ -436,58 +433,92 @@ export default function RegistroUsuario({ navigation }) {
                       mode="date"
                       display="default"
                       onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                          const utcDate = new Date(selectedDate.getTime() + selectedDate.getTimezoneOffset() * 60000);
-                          setCredentials({
-                            ...credentials,
-                            fechaNacimiento: utcDate.toISOString().split("T")[0],
-                          });
-                        }
+                        const fixedDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000);
+                        setCredentials({ ...credentials, fechaNacimiento: fixedDate.toISOString().split("T")[0] });
                         setShowDatePicker(false);
                       }}
                     />
                   )}
 
-                  {["numeroCedula", "comunidad", "municipio", "departamento", "edad"].map((field, index) => (
-                    <View key={index} style={{ marginBottom: 15 }}>
-                      <TextInput
-                        style={{ width: "100%", height: 50, borderColor: "#ddd", borderWidth: 1, borderRadius: 5, paddingHorizontal: 15 }}
-                        placeholder={`Ingrese su ${field}`}
-                        onChangeText={(value) => handleCredentialsChange(field, value)}
-                        value={credentials[field]}
-                        keyboardType={field === "edad" ? "numeric" : "default"}
-                      />
-                    </View>
-                  ))}
+                  <View style={{ marginBottom: 15 }}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ingrese su número de cédula"
+                      onChangeText={(value) => handleCredentialsChange("numeroCedula", value)}
+                      value={credentials.numeroCedula}
+                      editable={!loading} // Deshabilitar mientras se guarda
+                    />
+                    {cedulaError ? <Text style={{ color: "red", fontSize: 12 }}>{cedulaError}</Text> : null}
+                  </View>
+
+                  {/* Otros campos */}
+                  <View style={{ marginBottom: 15 }}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ingrese su comunidad"
+                      onChangeText={(value) => handleCredentialsChange("comunidad", value)}
+                      value={credentials.comunidad}
+                      editable={!loading} // Deshabilitar mientras se guarda
+                    />
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ingrese su municipio"
+                      onChangeText={(value) => handleCredentialsChange("municipio", value)}
+                      value={credentials.municipio}
+                      editable={!loading} // Deshabilitar mientras se guarda
+                    />
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ingrese su departamento"
+                      onChangeText={(value) => handleCredentialsChange("departamento", value)}
+                      value={credentials.departamento}
+                      editable={!loading} // Deshabilitar mientras se guarda
+                    />
+                  </View>
+
+                  <View style={{ marginBottom: 15 }}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ingrese su edad"
+                      keyboardType="numeric"
+                      onChangeText={(value) => handleCredentialsChange("edad", value)}
+                      value={credentials.edad}
+                      editable={!loading} // Deshabilitar mientras se guarda
+                    />
+                  </View>
 
                   <Picker
                     selectedValue={credentials.genero}
-                    onValueChange={(itemValue) => setCredentials({ ...credentials, genero: itemValue })}
-                    style={{ width: "100%", height: 50 }}
+                    onValueChange={(itemValue) => handleCredentialsChange("genero", itemValue)}
+                    style={styles.picker}
+                    enabled={!loading} // Deshabilitar mientras se guarda
                   >
                     <Picker.Item label="Seleccione Género" value="" />
                     <Picker.Item label="Femenino" value="Femenino" />
                     <Picker.Item label="Masculino" value="Masculino" />
                   </Picker>
-
-                  {/* Error de validación de credenciales */}
-                  {credencialesError ? <Text style={{ color: "red", fontSize: 12, marginTop: 5 }}>{credencialesError}</Text> : null}
-
                 </ScrollView>
 
-                {/* Botones del modal */}
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
+                <View style={styles.modalActionButtons}>
                   <TouchableOpacity
-                    style={{ backgroundColor: "#4CAF50", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
+                    style={styles.confirmButton}
                     onPress={handleSaveCredentials}
+                    disabled={isSaveButtonDisabled} // Deshabilitar el botón si hay errores en la cédula o si está cargando
                   >
-                    <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>Guardar</Text>
+                    <Text style={styles.buttonText}>Guardar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={{ backgroundColor: "#f44336", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
+                    style={styles.cancelButton}
                     onPress={() => setModalVisible(false)}
+                    disabled={loading} // Deshabilitar mientras se guarda
                   >
-                    <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>Cancelar</Text>
+                    <Text style={styles.buttonText}>Cancelar</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -495,48 +526,47 @@ export default function RegistroUsuario({ navigation }) {
           </Modal>
 
           {/* Modal para seleccionar foto */}
-          <Modal
-            visible={photoModalVisible}
-            transparent={true}
-            animationType="slide"
-          >
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
-              <View style={{ width: "90%", backgroundColor: "#fff", borderRadius: 10, padding: 20 }}>
-                <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Seleccionar Foto</Text>
+          <Modal visible={photoModalVisible} transparent={true} animationType="slide">
+            <View style={styles.modalContainer}>
+              <View style={styles.photoModalContent}>
+                <Text style={styles.modalTitle}>Seleccionar Foto</Text>
 
                 {selectedPhoto ? (
-                  <View style={{ width: 150, height: 150, borderRadius: 75, overflow: "hidden", justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#4CAF50", marginBottom: 20 }}>
-                    <Image source={{ uri: selectedPhoto }} style={{ width: "100%", height: "100%", borderRadius: 75 }} />
+                  <View style={styles.selectedPhotoContainer}>
+                    <Image source={{ uri: selectedPhoto }} style={styles.selectedPhoto} />
                   </View>
                 ) : (
-                  <View style={{ marginBottom: 20 }}>
+                  <View>
                     <TouchableOpacity
-                      style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}
+                      style={styles.photoButton}
                       onPress={() => pickImage(true)}
                     >
-                      <Image source={require("../icons/IconsRegistro/camara.png")} style={{ width: 20, height: 20, marginRight: 10 }} />
-                      <Text>Tomar Foto</Text>
+                      <Image
+                        source={require("../icons/IconsRegistro/camara.png")}
+                        style={styles.iconButton}
+                      />
+                      <Text style={styles.photoButtonText}>Tomar Foto</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={{ flexDirection: "row", alignItems: "center" }}
+                      style={styles.photoButton}
                       onPress={() => pickImage(false)}
                     >
-                      <Image source={require("../icons/IconsRegistro/image.png")} style={{ width: 20, height: 20, marginRight: 10 }} />
-                      <Text>Elegir de la Galería</Text>
+                      <Image
+                        source={require("../icons/IconsRegistro/image.png")}
+                        style={styles.iconButton}
+                      />
+                      <Text style={styles.photoButtonText}>Elegir de la Galería</Text>
                     </TouchableOpacity>
                   </View>
                 )}
 
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <TouchableOpacity
-                    style={{ backgroundColor: "#4CAF50", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
-                    onPress={confirmPhoto}
-                  >
-                    <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>Confirmar</Text>
+                <View style={styles.modalActionButtons}>
+                  <TouchableOpacity style={styles.confirmButton} onPress={confirmPhoto}>
+                    <Text style={styles.buttonText}>Confirmar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={{ backgroundColor: "#f44336", padding: 15, borderRadius: 5, flex: 1, marginHorizontal: 5 }}
+                    style={styles.cancelButton}
                     onPress={() => {
                       if (selectedPhoto) {
                         setSelectedPhoto(null);
@@ -545,7 +575,7 @@ export default function RegistroUsuario({ navigation }) {
                       }
                     }}
                   >
-                    <Text style={{ color: "#fff", fontSize: 16, textAlign: "center" }}>{selectedPhoto ? "Editar" : "Cancelar"}</Text>
+                    <Text style={styles.buttonText}>{selectedPhoto ? "Editar" : "Cancelar"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -557,62 +587,15 @@ export default function RegistroUsuario({ navigation }) {
   );
 }
 
-
-
 const styles = StyleSheet.create({
-  // Contenedor principal
-  container: {
-    flexGrow: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  // Estilo del logo
-  logo: {
-    width: width * 0.8,
-    height: height * 0.1,
-    marginBottom: 20,
-  },
-  // Título principal
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  // Contenedor de la imagen de perfil (donde se verá la imagen seleccionada)
-  imageContainer: {
-    marginBottom: 20,
-    width: 150,
-    height: 150,
-    borderRadius: 15,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
+  input: {
+    width: "100%",
+    height: 50,
+    borderColor: "#ddd",
     borderWidth: 1,
-    borderColor: "#ddd", // Color del borde
+    borderRadius: 5,
+    paddingHorizontal: 15,
   },
-  // Imagen de perfil seleccionada
-  profileImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 15,
-  },
-  // Placeholder para cuando no hay imagen seleccionada
-  placeholder: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // Texto dentro del placeholder
-  placeholderText: {
-    color: "#aaa", // Color gris claro
-  },
-  // Contenedor de inputs de texto
-  inputContainer: {
-    width: "100%",
-    marginBottom: 15,
-    position: "relative",
-  },
-  // Etiqueta flotante sobre el input
   inputLabel: {
     position: "absolute",
     top: -10,
@@ -623,77 +606,38 @@ const styles = StyleSheet.create({
     color: "#888",
     fontSize: 14,
   },
-  // Estilo del input de texto
-  input: {
-    width: "100%",
-    height: 50,
-    borderColor: "#ddd",
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 15,
-  },
-  // Icono dentro del input (ej: mostrar/ocultar contraseña)
-  inputIcon: {
+  charCounter: {
     position: "absolute",
     right: 15,
-    top: "50%",
-    transform: [{ translateY: -10 }],
-    zIndex: 1,
+    top: 15,
+    color: "#888",
+    fontSize: 12,
   },
-  // Icono del input
-  icon: {
-    width: 20,
-    height: 20,
-  },
-  // Contenedor de botones en la parte inferior
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginTop: 20,
-  },
-  // Estilo general para los botones
-  button: {
-    flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000", // Color de sombra
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  // Botón de guardar (verde)
   saveButton: {
     backgroundColor: "#4CAF50",
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 5,
   },
-  // Botón para vaciar campos (rojo)
   clearButton: {
     backgroundColor: "#f44336",
+    padding: 15,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 5,
   },
-  // Texto de los botones
   buttonText: {
     color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "center",
   },
-  // Botón dentro del modal
-  modalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    marginTop: 10,
-  },
-  // Contenedor general del modal
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Fondo semitransparente
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  // Contenido del modal
   modalContent: {
     width: "90%",
     backgroundColor: "#fff",
@@ -701,7 +645,22 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  // Contenido del modal de selección de foto
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#4CAF50",
+  },
   photoModalContent: {
     width: "90%",
     backgroundColor: "#fff",
@@ -710,92 +669,63 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // Scroll dentro del modal
-  modalScroll: {
-    alignItems: "center",
-    paddingBottom: 40,
-  },
-  // Título del modal
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  // Botón para seleccionar fecha de nacimiento
-  dateButton: {
-    backgroundColor: "#eee",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 10,
-  },
-  // Picker de selección (género, etc.)
-  picker: {
-    width: "100%",
-    height: 50,
-  },
-  // Botones de opciones (Tomar Foto, Elegir Galería)
-  photoButton: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // Icono dentro de los botones de opciones
-  iconButton: {
-    width: 40,
-    height: 40,
-    marginBottom: 10,
-  },
-  // Texto dentro de los botones de opciones
-  photoButtonText: {
-    fontSize: 16,
-    color: "#000", // Negro
-  },
-  // Contenedor para la imagen seleccionada en un círculo
   selectedPhotoContainer: {
     width: 150,
     height: 150,
-    borderRadius: 75, // Circular
+    borderRadius: 75,
     overflow: "hidden",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#4CAF50", // Borde verde
+    borderColor: "#4CAF50",
     marginBottom: 20,
   },
-  // Imagen seleccionada dentro del círculo
   selectedPhoto: {
     width: "100%",
     height: "100%",
-    borderRadius: 75, // Circular
+    borderRadius: 75,
   },
-  // Estilo para los botones de acción (Confirmar, Editar/Cancelar)
   modalActionButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
     marginTop: 20,
   },
-  // Botón de Confirmar (verde)
   confirmButton: {
-    backgroundColor: "#4CAF50", // Verde
+    backgroundColor: "#4CAF50",
     flex: 1,
     marginHorizontal: 5,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
   },
-  // Botón de Cancelar/Editar (rojo)
   cancelButton: {
-    backgroundColor: "#f44336", // Rojo 
+    backgroundColor: "#f44336",
     flex: 1,
     marginHorizontal: 5,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
   },
-  // Texto de los botones (Confirmar, Cancelar/Editar)
-  buttonText: {
-    color: "#fff",
+  iconButton: {
+    width: 40,
+    height: 40,
+    marginBottom: 10,
+  },
+  photoButtonText: {
     fontSize: 16,
-    fontWeight: "bold",
+    color: "#000",
+  },
+  photoButton: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  dateButton: {
+    backgroundColor: "#eee",
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 10,
+    width: "100%",
+    textAlign: "center",
   },
 });
