@@ -106,7 +106,7 @@ export default function RegistroUsuario({ navigation }) {
   // Verificar si la cédula ya existe en Firestore
   const checkCedulaInFirestore = async (value) => {
     const cedulaSnapshot = await getDocs(
-      query(collection(db, "usuarios"), where("numeroCedula", "==", value))
+      query(collection(db, "usuario_donante"), where("numeroCedula", "==", value))
     );
     if (!cedulaSnapshot.empty) {
       setCedulaError("La cédula ya está registrada.");
@@ -118,7 +118,7 @@ export default function RegistroUsuario({ navigation }) {
   // Verificar si el correo electrónico ya existe en Firestore
   const checkEmailInFirestore = async (value) => {
     const emailSnapshot = await getDocs(
-      query(collection(db, "usuarios"), where("correoElectronico", "==", value))
+      query(collection(db, "usuario_donante"), where("correoElectronico", "==", value))
     );
     if (!emailSnapshot.empty) {
       setEmailError("El correo electrónico ya está registrado.");
@@ -212,7 +212,7 @@ export default function RegistroUsuario({ navigation }) {
       }
 
       // Guardar los datos del usuario en Firestore, incluyendo la URL de la foto de perfil si existe
-      await addDoc(collection(db, "usuarios"), {
+      await addDoc(collection(db, "usuario_donante"), {
         uid: user.uid,
         ...userData,
         fotoPerfil: photoURL, // Guardar la URL de la foto en Firestore
