@@ -25,13 +25,6 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; //
 import { Picker } from "@react-native-picker/picker"; // Selector de datos
 import DateTimePicker from "@react-native-community/datetimepicker"; // Selector de fecha
 import CryptoJS from "crypto-js"; // Importamos crypto-js para el hashing de contraseñas
-import * as Font from "expo-font"; // Para cargar fuentes personalizadas
-import { useFonts } from "expo-font"; // Hook para manejar las fuentes
-import AppLoading from "expo-app-loading"; // Para manejar la carga inicial si las fuentes aún no están listas
-import {
-  Montserrat_400Regular,
-  Montserrat_700Bold,
-} from "@expo-google-fonts/montserrat"; // Importa las fuentes Montserrat
 
 // Obtener dimensiones de la pantalla
 const { width, height } = Dimensions.get("window");
@@ -47,16 +40,243 @@ const debounce = (func, delay) => {
   };
 };
 
+// Función para verificar si la cédula ya está registrada en la base de datos
+const checkCedulaInFirestore = async (value, setCedulaError) => {
+  try {
+    const cedulaSnapshot = await getDocs(
+      query(
+        collection(db, "usuario_donante"),
+        where("numeroCedula", "==", value)
+      )
+    );
+    if (!cedulaSnapshot.empty) {
+      setCedulaError("La cédula ya está registrada.");
+    } else {
+      setCedulaError("");
+    }
+  } catch (error) {
+    console.error("Error al verificar la cédula en Firestore:", error);
+    setCedulaError("Error al verificar la cédula.");
+  }
+};
+
+// Funciones para mostrar u ocultar los campos de municipio y comunidad
+const toggleShowMunicipio = () => {
+  setShowMunicipio(!showMunicipio);
+  if (!showMunicipio) {
+    setCredentials((prev) => ({ ...prev, municipio: "" }));
+  }
+};
+
+const toggleShowComunidad = () => {
+  setShowComunidad(!showComunidad);
+  if (!showComunidad) {
+    setCredentials((prev) => ({ ...prev, comunidad: "" }));
+  }
+};
+
+const toggleTipoSangre = () => {
+  setShowTipoSangre(!showTipoSangre);
+  if (!showTipoSangre) {
+    setCredentials((prev) => ({ ...prev, tipoSangre: "" }));
+  }
+};
+
+// Función para verificar si el correo ya está registrado en la base de datos
+const checkEmailInFirestore = async (value, setEmailError) => {
+  try {
+    const emailSnapshot = await getDocs(
+      query(
+        collection(db, "usuario_donante"),
+        where("correoElectronico", "==", value)
+      )
+    );
+    if (!emailSnapshot.empty) {
+      setEmailError("El correo electrónico ya está registrado.");
+    } else {
+      setEmailError("");
+    }
+  } catch (error) {
+    console.error(
+      "Error al verificar el correo electrónico en Firestore:",
+      error
+    );
+    setEmailError("Error al verificar el correo electrónico.");
+  }
+};
+
+// Función para verificar si el teléfono ya está registrado en la base de datos
+const checkTelefonoInFirestore = async (value, setTelefonoError) => {
+  try {
+    const telefonoSnapshot = await getDocs(
+      query(collection(db, "usuario_donante"), where("telefono", "==", value))
+    );
+    if (!telefonoSnapshot.empty) {
+      setTelefonoError("El número de teléfono ya está registrado.");
+    } else {
+      setTelefonoError("");
+    }
+  } catch (error) {
+    console.error("Error al verificar el teléfono en Firestore:", error);
+    setTelefonoError("Error al verificar el teléfono.");
+  }
+};
+
+// Función para formatear el número de teléfono en formato +505 ####-####
+const formatTelefono = (value) => {
+  let numeroSinPrefijo = value.replace(/[^0-9]/g, "");
+  if (numeroSinPrefijo.startsWith("505505")) {
+    numeroSinPrefijo = numeroSinPrefijo.slice(3); // Eliminar el duplicado
+  } else if (numeroSinPrefijo.startsWith("505")) {
+    numeroSinPrefijo = numeroSinPrefijo.slice(3); // Eliminar el prefijo 505 si ya está presente
+  }
+  if (numeroSinPrefijo.length > 8) {
+    numeroSinPrefijo = numeroSinPrefijo.slice(0, 8);
+  }
+  if (numeroSinPrefijo.length > 4) {
+    numeroSinPrefijo =
+      numeroSinPrefijo.slice(0, 4) + "-" + numeroSinPrefijo.slice(4);
+  }
+  return `+505 ${numeroSinPrefijo}`;
+};
+
+const validateCedula = (cedula, setCedulaError) => {
+  const cedulaRegex = /^\d{3}-\d{6}-\d{4}[A-Z]$/; // Validar el formato ###-######-####A
+  if (!cedulaRegex.test(cedula)) {
+    setCedulaError("El formato de la cédula es inválido.");
+  } else {
+    setCedulaError(""); // Limpiar el error si es válida
+  }
+};
+
+// Validación básica del correo electrónico (sin espacios y formato adecuado)
+const validateEmail = (value, setEmailError) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (value.includes(" ")) {
+    setEmailError("El correo electrónico no debe contener espacios.");
+  } else if (!emailRegex.test(value)) {
+    setEmailError("El correo electrónico es inválido.");
+  } else {
+    setEmailError("");
+  }
+};
+
+// Función para formatear la cédula en formato ###-######-####A
+const formatCedula = (value) => {
+  let onlyNumbers = value.replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  if (onlyNumbers.length > 17) onlyNumbers = onlyNumbers.slice(0, 17);
+
+  let formatted = onlyNumbers;
+  if (onlyNumbers.length >= 3) {
+    formatted = onlyNumbers.slice(0, 3) + "-";
+    if (onlyNumbers.length >= 9) {
+      formatted += onlyNumbers.slice(3, 9) + "-";
+      if (onlyNumbers.length >= 13) {
+        formatted += onlyNumbers.slice(9, 13) + onlyNumbers.slice(13, 14);
+      } else {
+        formatted += onlyNumbers.slice(9);
+      }
+    } else {
+      formatted += onlyNumbers.slice(3);
+    }
+  }
+
+  return formatted;
+};
+
+// Función para limpiar los campos del formulario
+const clearFields = (
+  setUserData,
+  setCredentials,
+  setEmailError,
+  setCedulaError,
+  setTelefonoError,
+  setFormError,
+  setSelectedPhoto
+) => {
+  setUserData({
+    nombres: "",
+    apellidos: "",
+    correoElectronico: "",
+    contraseña: "",
+    telefono: "+505 ",
+    tipoOperador: "",
+    fotoPerfil: null,
+  });
+  setCredentials({
+    fechaNacimiento: "",
+    numeroCedula: "",
+    comunidad: "",
+    municipio: "",
+    departamento: "",
+    genero: "",
+    tipoSangre: "",
+  });
+  setSelectedPhoto(null);
+  setEmailError("");
+  setCedulaError("");
+  setTelefonoError("");
+  setFormError("");
+};
+
+// Nueva función para manejar cambios en las credenciales
+const handleCredentialsChange = (field, value, setCredentials) => {
+  if (field === "numeroCedula") {
+    value = formatCedula(value); // Aplicar formato de cédula
+  }
+  setCredentials((prevCredentials) => ({
+    ...prevCredentials,
+    [field]: value,
+  }));
+};
+
+// Función para validar todos los campos antes de abrir el modal de credenciales
+const validateAllFields = async (
+  userData,
+  debouncedCheckEmail,
+  debouncedCheckTelefono,
+  setEmailError,
+  setTelefonoError,
+  setModalVisible,
+  setValidating,
+  emailError,
+  telefonoError
+) => {
+  setValidating(true);
+
+  try {
+    await Promise.all([
+      debouncedCheckEmail(userData.correoElectronico, setEmailError),
+      debouncedCheckTelefono(userData.telefono, setTelefonoError),
+    ]);
+
+    const currentEmailError = emailError;
+    const currentTelefonoError = telefonoError;
+
+    if (!currentEmailError && !currentTelefonoError) {
+      setModalVisible(true);
+    } else {
+      Alert.alert(
+        "Error de validación",
+        "Corrige los errores antes de continuar."
+      );
+    }
+  } catch (error) {
+    console.error("Error durante la validación:", error);
+    Alert.alert("Error", "Hubo un problema durante la validación.");
+  } finally {
+    setValidating(false);
+  }
+};
+
 // Componente principal de registro de usuario
 export default function RegistroUsuario({ navigation }) {
-  // Estados para almacenar la información del usuario y las credenciales
   const [userData, setUserData] = useState({
     nombres: "",
     apellidos: "",
-    nombreUsuario: "",
     correoElectronico: "",
     contraseña: "",
-    telefono: "",
+    telefono: "+505 ",
     tipoOperador: "",
     fotoPerfil: null,
   });
@@ -71,7 +291,6 @@ export default function RegistroUsuario({ navigation }) {
     tipoSangre: "",
   });
 
-  // Estados adicionales para controlar la interfaz y validaciones
   const [inputFocus, setInputFocus] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
@@ -79,116 +298,15 @@ export default function RegistroUsuario({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
-  // Estados para manejar errores de validación
-  const [userError, setUserError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [cedulaError, setCedulaError] = useState("");
   const [telefonoError, setTelefonoError] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Estados para controlar la carga y el progreso de la subida de datos
+  const [validating, setValidating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Función para limpiar los campos del formulario
-  const clearFields = () => {
-    setUserData({
-      nombres: "",
-      apellidos: "",
-      nombreUsuario: "",
-      correoElectronico: "",
-      contraseña: "",
-      telefono: "",
-      tipoOperador: "",
-      fotoPerfil: null,
-    });
-    setCredentials({
-      fechaNacimiento: "",
-      numeroCedula: "",
-      comunidad: "",
-      municipio: "",
-      departamento: "",
-      genero: "",
-      tipoSangre: "",
-    });
-    setSelectedPhoto(null); // Limpiar la foto seleccionada
-    setUserError(""); // Limpiar errores
-    setEmailError("");
-    setCedulaError("");
-    setTelefonoError("");
-    setFormError("");
-  };
-
-  // Función para formatear la cédula (añadir guiones donde corresponda)
-  const formatCedula = (value) => {
-    value = value.replace(/[^0-9A-Za-z]/g, ""); // Eliminar caracteres no permitidos
-    if (value.length > 3) value = value.slice(0, 3) + "-" + value.slice(3); // Añadir el primer guion
-    if (value.length > 10) value = value.slice(0, 10) + "-" + value.slice(10); // Añadir el segundo guion
-    return value.slice(0, 16); // Limitar a 16 caracteres
-  };
-
-  // Función para formatear el número de teléfono
-  const formatTelefono = (value) => {
-    value = value.replace(/[^0-9]/g, ""); // Eliminar caracteres no numéricos
-    if (value.length > 4) value = value.slice(0, 4) + "-" + value.slice(4); // Añadir guion después del cuarto dígito
-    return value.slice(0, 9); // Limitar a 9 caracteres
-  };
-
-  // Validación básica del correo electrónico (sin espacios y formato adecuado)
-  const validateEmail = (value) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Expresión regular para formato de correo
-    if (value.includes(" ")) {
-      setEmailError("El correo electrónico no debe contener espacios.");
-    } else if (!emailRegex.test(value)) {
-      setEmailError("El correo electrónico es inválido.");
-    } else {
-      setEmailError(""); // Limpiar error si es válido
-    }
-  };
-
-  // Función para verificar si la cédula ya está registrada en la base de datos
-  const checkCedulaInFirestore = async (value) => {
-    const cedulaSnapshot = await getDocs(
-      query(
-        collection(db, "usuario_donante"),
-        where("numeroCedula", "==", value)
-      )
-    );
-    if (!cedulaSnapshot.empty) {
-      setCedulaError("La cédula ya está registrada."); // Mostrar error si ya existe
-    } else {
-      setCedulaError(""); // Limpiar error si no existe
-    }
-  };
-
-  // Función para verificar si el correo ya está registrado en la base de datos
-  const checkEmailInFirestore = async (value) => {
-    const emailSnapshot = await getDocs(
-      query(
-        collection(db, "usuario_donante"),
-        where("correoElectronico", "==", value)
-      )
-    );
-    if (!emailSnapshot.empty) {
-      setEmailError("El correo electrónico ya está registrado."); // Mostrar error si ya existe
-    } else {
-      setEmailError(""); // Limpiar error si no existe
-    }
-  };
-
-  // Función para verificar si el teléfono ya está registrado en la base de datos
-  const checkTelefonoInFirestore = async (value) => {
-    const telefonoSnapshot = await getDocs(
-      query(collection(db, "usuario_donante"), where("telefono", "==", value))
-    );
-    if (!telefonoSnapshot.empty) {
-      setTelefonoError("El número de teléfono ya está registrado."); // Mostrar error si ya existe
-    } else {
-      setTelefonoError(""); // Limpiar error si no existe
-    }
-  };
-
-  // Uso de debounce para limitar las solicitudes de verificación en tiempo real
   const debouncedCheckCedula = useMemo(
     () => debounce(checkCedulaInFirestore, 500),
     []
@@ -202,92 +320,89 @@ export default function RegistroUsuario({ navigation }) {
     []
   );
 
-  // Función para manejar los cambios en las credenciales
-  const handleCredentialsChange = (field, value) => {
-    if (field === "numeroCedula") {
-      value = formatCedula(value); // Formatear la cédula
-      debouncedCheckCedula(value); // Verificar si ya existe
-    }
-    setCredentials({ ...credentials, [field]: value }); // Actualizar el estado
-  };
-
-  // Función para manejar los cambios en los datos del usuario
   const handleInputChange = (field, value) => {
+    if (field === "nombres" && value.length > 50) {
+      setFormError("El nombre no puede tener más de 50 caracteres.");
+      return;
+    } else if (field === "apellidos" && value.length > 50) {
+      setFormError("El apellido no puede tener más de 50 caracteres.");
+      return;
+    } else {
+      setFormError("");
+    }
+
     if (field === "correoElectronico") {
-      validateEmail(value); // Validar el correo
-      debouncedCheckEmail(value); // Verificar si ya existe
+      validateEmail(value, setEmailError);
+      debouncedCheckEmail(value, setEmailError);
     }
+
     if (field === "telefono") {
-      value = formatTelefono(value); // Formatear el teléfono
-      debouncedCheckTelefono(value); // Verificar si ya existe
+      value = formatTelefono(value);
+      debouncedCheckTelefono(value, setTelefonoError);
     }
-    setUserData({ ...userData, [field]: value }); // Actualizar el estado
+
+    setUserData({ ...userData, [field]: value });
   };
 
-  // Función para validar que todos los campos obligatorios estén completos
   const validateForm = () => {
     const {
       nombres,
       apellidos,
-      nombreUsuario,
       correoElectronico,
       contraseña,
       telefono,
       tipoOperador,
     } = userData;
+
     if (
       !nombres ||
       !apellidos ||
-      !nombreUsuario ||
       !correoElectronico ||
       !contraseña ||
       !telefono ||
       !tipoOperador
     ) {
-      setFormError("Todos los campos son obligatorios."); // Mostrar error si falta algún campo
+      setFormError("Todos los campos son obligatorios.");
       return false;
     }
-    return true; // Si todos los campos están completos, devolver true
+
+    setFormError(""); // Limpia el mensaje de error si todo es válido
+    return true;
   };
 
-  // Controla si el botón de "Siguiente" debe estar deshabilitado o no
   const isNextButtonDisabled = useMemo(() => {
     return cedulaError || emailError || telefonoError || !validateForm();
   }, [cedulaError, emailError, telefonoError, userData, credentials]);
 
-  // Controla si el botón de "Guardar" debe estar deshabilitado o no
   const isSaveButtonDisabled = useMemo(() => {
     return cedulaError || loading;
   }, [cedulaError, loading]);
 
-  // Función para manejar el guardado de las credenciales en Firebase
   const handleSaveCredentials = async () => {
-    setLoading(true); // Indicar que se está cargando
+    setLoading(true);
     try {
-      // Verificar que la contraseña no esté vacía o indefinida
+      // Validar que el departamento esté presente
+      if (!credentials.departamento) {
+        throw new Error("El campo 'Departamento' es obligatorio.");
+      }
+
       if (!userData.contraseña || userData.contraseña.trim() === "") {
         throw new Error("La contraseña no puede estar vacía.");
       }
 
-      // Hash de la contraseña usando crypto-js
-      const hashedPassword = CryptoJS.SHA256(userData.contraseña).toString(); // Hash con SHA256
-
-      // Crear usuario en Firebase Authentication con la contraseña original (Firebase ya aplica su propio hash)
+      const hashedPassword = CryptoJS.SHA256(userData.contraseña).toString();
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         userData.correoElectronico,
-        userData.contraseña // Contraseña original aquí porque Firebase tiene su propio sistema de hash
+        userData.contraseña
       );
       const user = userCredential.user;
 
-      let photoURL = ""; // URL de la foto de perfil subida
-
-      // Si se seleccionó una foto de perfil, subirla a Firebase Storage
+      let photoURL = "";
       if (userData.fotoPerfil) {
         const response = await fetch(userData.fotoPerfil);
         const blob = await response.blob();
         const storageRef = ref(storage, `fotosPerfil/${user.uid}.jpg`);
-
         const uploadTask = uploadBytesResumable(storageRef, blob);
 
         await new Promise((resolve, reject) => {
@@ -296,35 +411,32 @@ export default function RegistroUsuario({ navigation }) {
             (snapshot) => {
               const progressPercentage =
                 (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setProgress(progressPercentage); // Actualizar el progreso de la subida
+              setProgress(progressPercentage);
             },
             (error) => {
               console.log("Error al subir la imagen: ", error);
-              reject(error); // Manejar errores en la subida
+              reject(error);
             },
             async () => {
-              photoURL = await getDownloadURL(uploadTask.snapshot.ref); // Obtener la URL de la foto subida
+              photoURL = await getDownloadURL(uploadTask.snapshot.ref);
               resolve();
             }
           );
         });
       }
 
-      // Guardar los datos del usuario y credenciales en Firestore, incluyendo la contraseña hasheada
       await addDoc(collection(db, "usuario_donante"), {
         uid: user.uid,
         nombres: userData.nombres,
         apellidos: userData.apellidos,
-        nombreUsuario: userData.nombreUsuario,
-        correoElectronico: userData.correoElectronico, // Almacenar el correo
+        correoElectronico: userData.correoElectronico,
         telefono: userData.telefono,
         tipoOperador: userData.tipoOperador,
-        contraseña: hashedPassword, // Guardamos la contraseña hasheada con SHA256 en Firestore
-        fotoPerfil: photoURL, // URL de la foto de perfil
+        contraseña: hashedPassword,
+        fotoPerfil: photoURL,
         ...credentials,
       });
 
-      // Mostrar alerta de éxito y redirigir al login
       Alert.alert(
         "Registro Exitoso",
         "Los datos han sido guardados correctamente.",
@@ -340,23 +452,22 @@ export default function RegistroUsuario({ navigation }) {
         ]
       );
     } catch (e) {
-      console.error("Error al guardar en Firebase: ", e); // Manejar errores
+      console.error("Error al guardar en Firebase: ", e);
       Alert.alert(
         "Error",
         e.message || "Hubo un problema al guardar los datos."
       );
-      setLoading(false); // Terminar la carga
+      setLoading(false);
     }
   };
 
-  // Función para seleccionar una imagen, ya sea desde la cámara o galería
   const pickImage = async (fromCamera = false) => {
     let result;
     try {
       if (fromCamera) {
         result = await ImagePicker.launchCameraAsync({
           allowsEditing: false,
-          quality: 1, // Calidad de la imagen
+          quality: 1,
         });
       } else {
         result = await ImagePicker.launchImageLibraryAsync({
@@ -366,20 +477,18 @@ export default function RegistroUsuario({ navigation }) {
       }
 
       if (!result.canceled) {
-        setSelectedPhoto(result.assets[0].uri); // Establecer la foto seleccionada
+        setSelectedPhoto(result.assets[0].uri);
       }
     } catch (error) {
       console.error("Error al seleccionar la imagen: ", error);
     }
   };
 
-  // Función para confirmar la foto seleccionada y guardarla en el estado
   const confirmPhoto = () => {
     setUserData({ ...userData, fotoPerfil: selectedPhoto });
     setPhotoModalVisible(false);
   };
 
-  // Función para formatear la fecha a "DD/MM/YYYY"
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -391,9 +500,9 @@ export default function RegistroUsuario({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-  style={{ flex: 1 }}
-  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
->
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           {/* Logo de la aplicación */}
           <Image
@@ -428,6 +537,7 @@ export default function RegistroUsuario({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Ingrese sus nombres"
+              maxLength={50} // Limitar a 50 caracteres
               onFocus={() => setInputFocus({ ...inputFocus, nombres: true })}
               onBlur={() => setInputFocus({ ...inputFocus, nombres: false })}
               onChangeText={(value) => handleInputChange("nombres", value)}
@@ -444,38 +554,13 @@ export default function RegistroUsuario({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Ingrese sus apellidos"
+              maxLength={50} // Limitar a 50 caracteres
               onFocus={() => setInputFocus({ ...inputFocus, apellidos: true })}
               onBlur={() => setInputFocus({ ...inputFocus, apellidos: false })}
               onChangeText={(value) => handleInputChange("apellidos", value)}
               value={userData.apellidos}
               editable={!loading}
             />
-          </View>
-
-          {/* Campo de nombre de usuario */}
-          <View style={styles.inputContainer}>
-            {inputFocus["nombreUsuario"] || userData["nombreUsuario"] ? (
-              <Text style={styles.inputLabel}>Nombre de usuario</Text>
-            ) : null}
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese un nombre de usuario"
-              maxLength={15} // Limitar a 15 caracteres
-              onFocus={() =>
-                setInputFocus({ ...inputFocus, nombreUsuario: true })
-              }
-              onBlur={() =>
-                setInputFocus({ ...inputFocus, nombreUsuario: false })
-              }
-              onChangeText={(value) =>
-                handleInputChange("nombreUsuario", value)
-              }
-              value={userData.nombreUsuario}
-              editable={!loading}
-            />
-            <Text style={styles.charCounter}>
-              {userData.nombreUsuario.length}/15
-            </Text>
           </View>
 
           {/* Campo de correo electrónico */}
@@ -542,13 +627,16 @@ export default function RegistroUsuario({ navigation }) {
             ) : null}
             <TextInput
               style={styles.input}
-              placeholder="Ingrese su número de teléfono"
+              placeholder="Ingresa tu número de teléfono"
               keyboardType="phone-pad"
+              value={userData.telefono}
+              onChangeText={(value) =>
+                handleInputChange("telefono", formatTelefono(value))
+              }
               onFocus={() => setInputFocus({ ...inputFocus, telefono: true })}
               onBlur={() => setInputFocus({ ...inputFocus, telefono: false })}
-              onChangeText={(value) => handleInputChange("telefono", value)}
-              value={userData.telefono}
               editable={!loading}
+              maxLength={14} // Limitar a 14 caracteres para +505 ####-####
             />
             {telefonoError ? (
               <Text style={styles.errorText}>{telefonoError}</Text>
@@ -581,17 +669,43 @@ export default function RegistroUsuario({ navigation }) {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.clearButton}
-              onPress={clearFields}
+              onPress={() =>
+                clearFields(
+                  setUserData,
+                  setCredentials,
+                  setEmailError,
+                  setCedulaError,
+                  setTelefonoError,
+                  setFormError,
+                  setSelectedPhoto
+                )
+              }
               disabled={loading}
             >
               <Text style={styles.buttonText}>Vaciar Campos</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.saveButton}
-              onPress={() => setModalVisible(true)}
-              disabled={isNextButtonDisabled}
+              onPress={() =>
+                validateAllFields(
+                  userData,
+                  debouncedCheckEmail,
+                  debouncedCheckTelefono,
+                  setEmailError,
+                  setTelefonoError,
+                  setModalVisible,
+                  setValidating,
+                  emailError,
+                  telefonoError
+                )
+              }
+              disabled={isNextButtonDisabled || validating}
             >
-              <Text style={styles.buttonText}>Siguiente</Text>
+              {validating ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Siguiente</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -648,20 +762,20 @@ export default function RegistroUsuario({ navigation }) {
 
                     {showDatePicker && (
                       <DateTimePicker
-                        value={new Date()}
+                        value={
+                          credentials.fechaNacimiento
+                            ? new Date(credentials.fechaNacimiento)
+                            : new Date()
+                        }
                         mode="date"
                         display="default"
                         onChange={(event, selectedDate) => {
                           if (selectedDate) {
-                            const fixedDate = new Date(
-                              selectedDate.getTime() -
-                                selectedDate.getTimezoneOffset() * 60000
-                            );
                             setCredentials({
                               ...credentials,
-                              fechaNacimiento: fixedDate
+                              fechaNacimiento: selectedDate
                                 .toISOString()
-                                .split("T")[0],
+                                .split("T")[0], // Fecha correcta sin ajustes
                             });
                           }
                           setShowDatePicker(false); // Ocultar el DateTimePicker
@@ -671,12 +785,31 @@ export default function RegistroUsuario({ navigation }) {
                   </View>
 
                   <View style={styles.inputContainer}>
+                    {inputFocus["numeroCedula"] ||
+                    credentials["numeroCedula"] ? (
+                      <Text style={styles.inputLabel}>Número de cédula</Text>
+                    ) : null}
                     <TextInput
                       style={styles.input}
                       placeholder="Ingrese su número de cédula"
-                      onChangeText={(value) =>
-                        handleCredentialsChange("numeroCedula", value)
+                      onFocus={() =>
+                        setInputFocus({ ...inputFocus, numeroCedula: true })
                       }
+                      onBlur={() =>
+                        setInputFocus({ ...inputFocus, numeroCedula: false })
+                      }
+                      onChangeText={(value) => {
+                        const formattedCedula = formatCedula(value);
+                        handleCredentialsChange(
+                          "numeroCedula",
+                          formattedCedula,
+                          setCredentials
+                        );
+                        validateCedula(formattedCedula, setCedulaError); // Validar formato
+                        if (!cedulaError) {
+                          debouncedCheckCedula(formattedCedula, setCedulaError); // Verificar si la cédula está registrada
+                        }
+                      }}
                       value={credentials.numeroCedula}
                       editable={!loading}
                     />
@@ -691,7 +824,11 @@ export default function RegistroUsuario({ navigation }) {
                     <Picker
                       selectedValue={credentials.tipoSangre}
                       onValueChange={(value) =>
-                        handleCredentialsChange("tipoSangre", value)
+                        handleCredentialsChange(
+                          "tipoSangre",
+                          value,
+                          setCredentials
+                        )
                       }
                       style={styles.picker}
                       enabled={!loading}
@@ -708,38 +845,80 @@ export default function RegistroUsuario({ navigation }) {
                     </Picker>
                   </View>
 
+                  {/* Campo de Departamento */}
                   <View style={styles.inputContainer}>
+                    {inputFocus["departamento"] || credentials.departamento ? (
+                      <Text style={styles.inputLabel}>Departamento</Text>
+                    ) : null}
                     <TextInput
                       style={styles.input}
-                      placeholder="Ingrese su comunidad"
-                      onChangeText={(value) =>
-                        handleCredentialsChange("comunidad", value)
+                      placeholder="Ingrese su departamento"
+                      onFocus={() =>
+                        setInputFocus({ ...inputFocus, departamento: true })
                       }
-                      value={credentials.comunidad}
+                      onBlur={() =>
+                        setInputFocus({ ...inputFocus, departamento: false })
+                      }
+                      onChangeText={(value) =>
+                        handleCredentialsChange(
+                          "departamento",
+                          value,
+                          setCredentials
+                        )
+                      }
+                      value={credentials.departamento}
                       editable={!loading}
                     />
                   </View>
 
+                  {/* Campo de Municipio */}
                   <View style={styles.inputContainer}>
+                    {inputFocus["municipio"] || credentials.municipio ? (
+                      <Text style={styles.inputLabel}>Municipio</Text>
+                    ) : null}
                     <TextInput
                       style={styles.input}
                       placeholder="Ingrese su municipio"
+                      onFocus={() =>
+                        setInputFocus({ ...inputFocus, municipio: true })
+                      }
+                      onBlur={() =>
+                        setInputFocus({ ...inputFocus, municipio: false })
+                      }
                       onChangeText={(value) =>
-                        handleCredentialsChange("municipio", value)
+                        handleCredentialsChange(
+                          "municipio",
+                          value,
+                          setCredentials
+                        )
                       }
                       value={credentials.municipio}
                       editable={!loading}
                     />
                   </View>
 
+                  {/* Campo de Comunidad */}
                   <View style={styles.inputContainer}>
+                    {inputFocus["comunidad"] || credentials.comunidad ? (
+                      <Text style={styles.inputLabel}>Comunidad</Text>
+                    ) : null}
                     <TextInput
                       style={styles.input}
-                      placeholder="Ingrese su departamento"
-                      onChangeText={(value) =>
-                        handleCredentialsChange("departamento", value)
+                      placeholder="Ingrese su comunidad"
+                      onFocus={() =>
+                        setInputFocus({ ...inputFocus, comunidad: true })
                       }
-                      value={credentials.departamento}
+                      onBlur={() =>
+                        setInputFocus({ ...inputFocus, comunidad: false })
+                      }
+                      onChangeText={(value) =>
+                        handleCredentialsChange(
+                          "comunidad",
+                          value,
+                          setCredentials
+                        )
+                      }
+                      value={credentials.comunidad}
                       editable={!loading}
                     />
                   </View>
@@ -747,7 +926,11 @@ export default function RegistroUsuario({ navigation }) {
                   <Picker
                     selectedValue={credentials.genero}
                     onValueChange={(itemValue) =>
-                      handleCredentialsChange("genero", itemValue)
+                      handleCredentialsChange(
+                        "genero",
+                        itemValue,
+                        setCredentials
+                      )
                     }
                     style={styles.picker}
                     enabled={!loading}
@@ -798,29 +981,30 @@ export default function RegistroUsuario({ navigation }) {
                   </View>
                 ) : (
                   <View>
-                  <TouchableOpacity
-                    style={styles.photoButton} // Aquí defines la fila y alineas a la izquierda
-                    onPress={() => pickImage(true)}
-                  >
-                    <Image
-                      source={require("../icons/IconsRegistro/camara.png")}
-                      style={styles.iconButton}
-                    />
-                    <Text style={styles.photoButtonText}>Tomar Foto</Text>
-                  </TouchableOpacity>
-                
-                  <TouchableOpacity
-                    style={styles.photoButton} // Aquí también defines la fila y alineas a la izquierda
-                    onPress={() => pickImage(false)}
-                  >
-                    <Image
-                      source={require("../icons/IconsRegistro/image.png")}
-                      style={styles.iconButton}
-                    />
-                    <Text style={styles.photoButtonText}>Elegir de la Galería</Text>
-                  </TouchableOpacity>
-                </View>
-                
+                    <TouchableOpacity
+                      style={styles.photoButton}
+                      onPress={() => pickImage(true)}
+                    >
+                      <Image
+                        source={require("../icons/IconsRegistro/camara.png")}
+                        style={styles.iconButton}
+                      />
+                      <Text style={styles.photoButtonText}>Tomar Foto</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.photoButton}
+                      onPress={() => pickImage(false)}
+                    >
+                      <Image
+                        source={require("../icons/IconsRegistro/image.png")}
+                        style={styles.iconButton}
+                      />
+                      <Text style={styles.photoButtonText}>
+                        Elegir de la Galería
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 <View style={styles.modalActionButtons}>
@@ -869,9 +1053,9 @@ const styles = StyleSheet.create({
   // Estilo del contenido dentro del ScrollView
   scrollViewContent: {
     alignItems: "center", // Centra el contenido horizontalmente
-    flexGrow: 1, 
-    paddingBottom: 100, 
-    paddingHorizontal: 20 // Ajusta este valor según el espacio que desees en los lados
+    flexGrow: 1,
+    paddingBottom: 100,
+    paddingHorizontal: 20, // Ajusta este valor según el espacio que desees en los lados
   },
 
   // Logo
@@ -1088,26 +1272,6 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular", // Tipografía Montserrat Regular
   },
 
-  // Contenedor del input para unificar el diseño
-  inputContainer: {
-    width: "100%", // Ocupa todo el ancho disponible
-    marginBottom: 15, // Margen inferior de 15px
-    position: "relative", // Para poder posicionar el label flotante
-  },
-
-  // Label flotante sobre el input
-  inputLabel: {
-    position: "absolute", // Posición absoluta sobre el input
-    top: -10, // Posición encima del input
-    left: 15, // Margen desde la izquierda
-    backgroundColor: "#FFFFFF", // Fondo blanco
-    paddingHorizontal: 5, // Espaciado interno horizontal
-    zIndex: 1, // Asegura que esté encima del input
-    color: "#888", // Color gris claro
-    fontSize: 14, // Tamaño de fuente
-    fontFamily: "Montserrat_400Regular", // Tipografía Montserrat Regular
-  },
-
   // Botones de acción en el modal
   modalActionButtons: {
     flexDirection: "row", // Alineación horizontal de los botones
@@ -1143,6 +1307,7 @@ const styles = StyleSheet.create({
     textAlign: "center", // Centrado horizontalmente
     fontFamily: "Montserrat_700Bold", // Tipografía Montserrat Bold
   },
+
   // Contenedor del modal de selección de foto
   modalContainer: {
     flex: 1, // Ocupa todo el espacio disponible
@@ -1211,7 +1376,7 @@ const styles = StyleSheet.create({
     alignItems: "center", // Centrar el texto dentro del botón
   },
 
-
+  // Estilo del botón de foto
   photoButton: {
     flexDirection: "row", // Alinear el ícono y el texto en fila
     alignItems: "center", // Centrar verticalmente ícono y texto
@@ -1219,15 +1384,38 @@ const styles = StyleSheet.create({
     padding: 10, // Opcional: para añadir espacio alrededor del contenido
     backgroundColor: "rgba(255, 255, 255, 0.8)", // Blanco con opacidad del 80%
     borderRadius: 5, // Opcional: bordes redondeados
-    width: '100%', // Ocupa todo el ancho del botón
+    width: "100%", // Ocupa todo el ancho del botón
   },
-  
+
+  // Ícono dentro del botón
   iconButton: {
     width: 24, // Ancho del ícono
     height: 24, // Alto del ícono
     marginRight: 10, // Espacio entre el ícono y el texto
   },
-  
-  
-  
+  inputContainer: {
+    width: "100%",
+    marginBottom: 15,
+    position: "relative", // Para posicionar correctamente el label flotante
+  },
+  input: {
+    width: "100%",
+    height: 50,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    fontFamily: "Montserrat_400Regular",
+  },
+  inputLabel: {
+    position: "absolute",
+    top: -10,
+    left: 15,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 5,
+    zIndex: 1,
+    color: "#888",
+    fontSize: 14,
+    fontFamily: "Montserrat_400Regular",
+  },
 });

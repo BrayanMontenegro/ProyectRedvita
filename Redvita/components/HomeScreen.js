@@ -1,63 +1,104 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import Header from './Header';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView } from 'react-native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Header from './Header'; // Importing your external Header component
 
 const HomeScreen = () => {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Integrating the Header component at the top */}
         <Header />
-      </View>
-      <ScrollView>
-        <View style={styles.notificationsContainer}>
-          <Text style={styles.notificationText}>Evento Disponible</Text>
-          <View style={styles.notificationButtons}>
-            <TouchableOpacity style={styles.cancelButton}>
-              <Text style={styles.buttonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.acceptButton}>
-              <Text style={styles.buttonText}>Aceptar</Text>
+
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          {/* Notification Section */}
+          <View style={styles.notificationContainer}>
+            {/* Left Section: Notification Icon and Text */}
+            <View style={styles.notificationLeft}>
+              <Ionicons name="notifications-outline" size={30} color="#fff" />
+              <View style={styles.notificationTextContainer}>
+                <Text style={styles.notificationTitle}>Notificaciones</Text>
+                <Text style={styles.notificationSubtitle}>Evento Disponible</Text>
+              </View>
+            </View>
+
+            {/* Middle Section: Cancel and Accept Buttons */}
+            <View style={styles.notificationButtons}>
+              <TouchableOpacity style={styles.cancelButton}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.acceptButton}>
+                <Text style={styles.acceptButtonText}>Aceptar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Right Section: Redvita Logo */}
+            <View style={styles.notificationLogo}>
+              <Image source={require('../assets/icono.png')} style={styles.logo} />
+            </View>
+          </View>
+
+          {/* Emergency Card */}
+          <View style={styles.emergencyContainer}>
+            <View style={styles.placeholderIconContainer}>
+              <Ionicons name="image-outline" size={80} color="#ccc" />
+            </View>
+            <View style={styles.emergencyBottomContainer}>
+              <TouchableOpacity style={styles.arrowButton}>
+                <Ionicons name="chevron-back-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.arrowButton}>
+                <Ionicons name="chevron-forward-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.viewButton}>
+                <Text style={styles.viewText}>VER</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.emergencyButton}>
+              <Text style={styles.emergencyButtonText}>EMERGENCIA</Text>
+              <Ionicons name="alert-outline" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.redvitaButton}>
-            <Text style={styles.redvitaText}>Redvita</Text>
+
+          {/* Redvita Button */}
+          <View style={styles.redvitaContainer}>
+            <View style={styles.redvitaInfo}>
+              <Image source={require('../assets/icono.png')} style={styles.redvitaIcon} />
+              <View style={styles.redvitaTextContainer}>
+                <Text style={styles.redvitaTitle}>Redvita</Text>
+                <Text style={styles.redvitaSubtitle}>Te invita a compartir con tus amigos</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.redvitaButton}>
+              <Text style={styles.redvitaButtonText}>IR</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Bottom Navigation */}
+        <View style={styles.navbar}>
+          <TouchableOpacity style={styles.navButton}>
+            <Ionicons name="home" size={30} color="#fff" />
+            <Text style={styles.navText}>Inicio</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Ionicons name="time-outline" size={30} color="#fff" />
+            <Text style={styles.navText}>Historial</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Ionicons name="chatbox-outline" size={30} color="#fff" />
+            <Text style={styles.navText}>Consultar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <MaterialIcons name="event-available" size={30} color="#fff" />
+            <Text style={styles.navText}>Citas</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton}>
+            <Ionicons name="location-outline" size={30} color="#fff" />
+            <Text style={styles.navText}>Mapa</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Contenedor de la imagen */}
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.placeholderImage} />
-        </View>
-
-        {/* Contenedor de la tarjeta de emergencia */}
-        <View style={styles.emergencyCard}>
-          <Text style={styles.emergencyText}>EMERGENCIA</Text>
-          <TouchableOpacity style={styles.emergencyButton}>
-            <Text style={styles.buttonIcon}>🚨</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Redvita botón */}
-        <TouchableOpacity style={styles.redvitaInviteButton}>
-          <Text style={styles.redvitaInviteText}>Redvita te invita a compartir con tus amigos</Text>
-          <TouchableOpacity style={styles.irButton}>
-            <Text style={styles.irText}>IR</Text>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Footer con los botones */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton}>
-          <Text style={styles.footerText}>Inicio</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton}>
-          <Text style={styles.footerText}>Historial</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton}>
-          <Text style={styles.footerText}>Consultar</Text>
-        </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     </View>
   );
 };
@@ -65,150 +106,203 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0', // Color de fondo más suave
+    backgroundColor: '#ffffff',
   },
-  header: {
-    paddingTop: 30, // Ajustar el espacio superior para evitar flex innecesario
-    paddingBottom: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+  safeArea: {
+    flex: 1,
   },
-  notificationsContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    margin: 15,
-    borderRadius: 10,
-    elevation: 3, // Añade sombra para Android
-    shadowColor: '#000', // Añade sombra para iOS
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
+  notificationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#005e72',
+    padding: 15,
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginTop: 10,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  notificationText: {
+  notificationLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationTextContainer: {
+    marginLeft: 10,
+  },
+  notificationTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    color: '#fff',
+  },
+  notificationSubtitle: {
+    fontSize: 14,
+    color: '#fff',
   },
   notificationButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 10,
+    marginHorizontal: 10,
   },
   cancelButton: {
-    backgroundColor: '#ff4d4d',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#005e72',
+  },
+  cancelButtonText: {
+    color: '#005e72',
+    fontWeight: 'bold',
   },
   acceptButton: {
-    backgroundColor: '#4caf50',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: '#e90101',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 20,
   },
-  buttonText: {
+  acceptButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
   },
-  redvitaButton: {
-    backgroundColor: '#ff0000',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 10,
+  notificationLogo: {
+    paddingHorizontal: 10,
   },
-  redvitaText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    textAlign: 'center',
+  logo: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
   },
-  imageContainer: {
+  emergencyContainer: {
+    backgroundColor: '#f2f2f2',
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginTop: 20,
     alignItems: 'center',
-    marginVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  placeholderImage: {
-    width: 150,
-    height: 150,
-    resizeMode: 'cover',
-    borderRadius: 75, // Imagen en forma circular
+  placeholderIconContainer: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e6e6e6',
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  emergencyCard: {
-    backgroundColor: '#ff4d4d',
+  emergencyBottomContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    marginHorizontal: 15,
-    borderRadius: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    width: '100%',
+    paddingVertical: 10,
   },
-  emergencyText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 20,
-  },
-  emergencyButton: {
-    backgroundColor: '#fff',
+  arrowButton: {
+    backgroundColor: '#005e72',
     padding: 10,
+    borderRadius: 30,
+  },
+  viewButton: {
+    backgroundColor: '#005e72',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
     borderRadius: 50,
   },
-  buttonIcon: {
-    fontSize: 24,
+  viewText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
-  redvitaInviteButton: {
-    backgroundColor: '#fff',
+  emergencyButton: {
+    flexDirection: 'row',
+    backgroundColor: '#e90101',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    width: '80%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  emergencyButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginRight: 10,
+  },
+  redvitaContainer: {
+    backgroundColor: '#f2f2f2',
     padding: 15,
-    marginHorizontal: 15,
-    marginVertical: 10,
-    borderRadius: 10,
+    borderRadius: 30,
+    marginHorizontal: 20,
+    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
     shadowRadius: 5,
+    elevation: 5,
   },
-  redvitaInviteText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  irButton: {
-    backgroundColor: '#ccc',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginLeft: 10,
-  },
-  irText: {
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  footer: {
+  redvitaInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
-  footerButton: {
     alignItems: 'center',
   },
-  footerText: {
-    color: '#333',
+  redvitaIcon: {
+    width: 45,
+    height: 45,
+    marginRight: 10,
+  },
+  redvitaTextContainer: {
+    flexDirection: 'column',
+  },
+  redvitaTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#005e72',
+  },
+  redvitaSubtitle: {
+    fontSize: 14,
+    color: '#005e72',
+  },
+  redvitaButton: {
+    backgroundColor: '#005e72',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  redvitaButtonText: {
+    color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#e90101',
+    paddingVertical: 15,
+  },
+  navButton: {
+    alignItems: 'center',
+  },
+  navText: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 5,
   },
 });
 

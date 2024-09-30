@@ -6,67 +6,80 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import { LinearGradient } from "expo-linear-gradient"; // Esta es la importación correcta para el gradiente
+import { LinearGradient } from "expo-linear-gradient";
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(""); // Campo para el correo
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState(""); // Estado para manejar los mensajes de error
+  const [loading, setLoading] = useState(false); // Estado para manejar el estado de carga
 
+  // Función para manejar el inicio de sesión
   const handleLogin = async () => {
+    setErrorMessage("");
+    setLoading(true);
+
     if (!email || !password) {
-      setErrorMessage("Ingresa tu correo y contraseña.");
+      setErrorMessage("Por favor, ingresa tu correo y contraseña.");
+      setLoading(false);
       return;
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log("Usuario autenticado:", user);
-      setErrorMessage(""); // Limpiar el mensaje de error en caso de éxito
-      navigation.navigate("Home");
+      setLoading(false);
+      setErrorMessage("");
+      navigation.navigate("Home"); // Redirigir a la pantalla principal después del inicio de sesión
     } catch (error) {
-      console.error("Error al iniciar sesión:", error.message);
-      setErrorMessage("Contraseña incorrecta."); // Mensaje de error en la pantalla
+      setLoading(false);
+      if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+        setErrorMessage("El correo o la contraseña son incorrectos.");
+        setPassword(""); // Limpiar el campo de la contraseña
+      } else if (error.code === "auth/invalid-email") {
+        setErrorMessage("El formato del correo es inválido.");
+      } else {
+        setErrorMessage("Error al iniciar sesión. Inténtalo de nuevo.");
+      }
     }
   };
 
-  const handleCreateAccount = () => {
-    navigation.navigate("Registro");
-  };
-
   return (
-    <LinearGradient
-      colors={["#005e72", "#e90101"]}
-      style={styles.gradientBackground}
-    >
+    <LinearGradient colors={["#005e72", "#e90101"]} style={styles.gradientBackground}>
       <View style={styles.container}>
-        <Text style={styles.title}>Bienvenido</Text>
+        <Text style={styles.title}>Bienvenido a</Text>
 
+        {/* Logo de la aplicación */}
+        <Image
+          source={require("../assets/logo_horizontal_con_slogan.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
+        {/* Campo para correo electrónico */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Correo Electrónico</Text>
+          <Text style={styles.label}>Correo</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ingresa tu correo electrónico"
+            placeholder="Ingresa tu correo"
             value={email}
             onChangeText={(text) => {
               setEmail(text);
-              setErrorMessage(""); // Limpiar el mensaje de error al escribir
+              setErrorMessage("");
             }}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#aaa"
+            editable={!loading}
           />
         </View>
 
+        {/* Campo de contraseña */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Contraseña</Text>
           <View style={styles.passwordContainer}>
@@ -76,14 +89,16 @@ const LoginScreen = ({ navigation }) => {
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
-                setErrorMessage(""); // Limpiar el mensaje de error al escribir
+                setErrorMessage("");
               }}
               secureTextEntry={!showPassword}
               placeholderTextColor="#aaa"
+              editable={!loading}
             />
             <TouchableOpacity
               style={styles.iconContainer}
               onPress={() => setShowPassword(!showPassword)}
+              disabled={loading}
             >
               <Image
                 source={
@@ -95,24 +110,24 @@ const LoginScreen = ({ navigation }) => {
               />
             </TouchableOpacity>
           </View>
-          {/* Mensaje de error pequeño, alineado a la derecha */}
-          {errorMessage ? (
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          ) : null}
         </View>
 
+        {/* Botón de Iniciar Sesión */}
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
           accessibilityLabel="Botón de inicio de sesión"
+          disabled={loading}
         >
-          <Text style={styles.buttonText}>Iniciar Sesión</Text>
+          {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Iniciar Sesión</Text>}
         </TouchableOpacity>
+
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
         <TouchableOpacity
           style={styles.createAccountButton}
-          onPress={handleCreateAccount}
-          accessibilityLabel="Botón para crear una cuenta"
+          onPress={() => navigation.navigate("Registro")}
+          disabled={loading}
         >
           <Text style={styles.createAccountText}>Crear una cuenta</Text>
         </TouchableOpacity>
@@ -138,13 +153,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 10,
+    alignItems: "center", // Alineación centrada del contenido
   },
   title: {
     fontSize: 36, // Tamaño del título aumentado
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
-    marginBottom: 40,
+    marginBottom: 20, // Espaciado superior del logo
+  },
+  logo: {
+    width: "70%", // Ajusta el tamaño del logo
+    height: 120, // Altura del logo
+    marginBottom: 40, // Margen inferior para espaciar los campos de entrada
   },
   inputContainer: {
     width: "100%",
