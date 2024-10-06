@@ -1,0 +1,173 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.navbar {
+  background-color: #343a40;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-link {
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.container {
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #343a40;
+  padding: 20px 0;
+  text-align: center;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.footer .social-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.footer .social-icon a {
+  font-size: 2rem;
+  color: white;
+  margin: 0 15px;
+  transition: color 0.3s ease;
+}
+
+.footer .social-icon a:hover {
+  color: #007bff; /* Cambia el color al pasar el mouse */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .footer .social-icon {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .footer .social-icon a {
+    font-size: 1.8rem;
+  }
+}
+/* footer */
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Login Form Styles */
+.login-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #343a40;
+  padding: 20px 0;
+  text-align: center;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.footer .social-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.footer .social-icon a {
+  font-size: 2rem;
+  color: white;
+  margin: 0 15px;
+  transition: color 0.3s ease;
+}
+
+.footer .social-icon a:hover {
+  color: #007bff;
+}
+
+/* Login Form Styles */
+.login-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #343a40;
+  padding: 20px 0;
+  text-align: center;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.footer .social-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.footer .social-icon a {
+  font-size: 2rem;
+  color: white;
+  margin: 0 15px;
+  transition: color 0.3s ease;
+}
+
+.footer .social-icon a:hover {
+  color: #007bff;
+}
