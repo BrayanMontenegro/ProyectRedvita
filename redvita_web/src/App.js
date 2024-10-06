@@ -5,6 +5,9 @@ import Home from './Pages/Home'; // Otros componentes
 import Login from './Pages/Login';
 import EducationalModule from './Pages/modulos';
 import ListEducationalModules from './Pages/listarmodulos';
+import CrearNotificacion from './Pages/Notificacion';
+import VerNotificacion from './Pages/ListarNotificacion';
+
 
 function App() {
   return (
@@ -14,6 +17,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/donadores" element={<Donadores />} />
+        <Route path="/Creanotifi" element={<CrearNotificacion />} />
+        <Route path="/listnoti" element={<VerNotificacion />} />
         <Route path="/ListEducationalModules" element={<ListEducationalModules />} />
         <Route path="/EducationalModule" element={<EducationalModule />} />
         <Route path="/" element={<Login />} /> {/* Redirigir por defecto al login */}

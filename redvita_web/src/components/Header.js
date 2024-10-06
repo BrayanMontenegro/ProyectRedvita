@@ -43,10 +43,10 @@ function Header() {
 
               <NavDropdown title="EVENTOS" id="eventos" className="nav-link-custom nav-dropdown">
                 <NavDropdown.Item as="div">
-                  <Link to="/UpcomingEvents" className="link-unstyled">Próximos Eventos</Link>
+                  <Link to="/listnoti" className="link-unstyled">Ver Notificaciones</Link>
                 </NavDropdown.Item>
                 <NavDropdown.Item as="div">
-                  <Link to="/PastEvents" className="link-unstyled">Eventos Pasados</Link>
+                  <Link to="/Creanotifi" className="link-unstyled">Crear Notificacion</Link>
                 </NavDropdown.Item>
               </NavDropdown>
 
@@ -61,7 +61,7 @@ function Header() {
 
               <NavDropdown title="DONANTES" id="donantes" className="nav-link-custom nav-dropdown">
                 <NavDropdown.Item as="div">
-                  <Link to="/BecomeDonor" className="link-unstyled">Conviértete en Donante</Link>
+                  <Link to="/useradmin" className="link-unstyled">usuarios</Link>
                 </NavDropdown.Item>
                 <NavDropdown.Item as="div">
                   <Link to="/donadores" className="link-unstyled">Lista de Donantes</Link>
