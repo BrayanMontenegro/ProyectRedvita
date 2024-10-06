@@ -1,0 +1,53 @@
+/* EducationalModule.css */
+.module-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.module-title {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #e90101;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.module-form .form-label {
+    color: #005e72;
+    font-weight: bold;
+}
+
+.module-form .form-control {
+    border-radius: 8px;
+    border: 1px solid #005e72;
+    transition: border-color 0.3s;
+}
+
+.module-form .form-control:focus {
+    border-color: #e90101;
+    box-shadow: 0 0 5px rgba(233, 1, 1, 0.5);
+}
+
+.module-button {
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+    font-size: 16px;
+    background-color: #e90101;
+    border: none;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+}
+
+.module-button:hover {
+    background-color: #b80000;
+}
+
+/* EducationalModule.css o Header.css */
+.mt-navbar {
+    margin-top: 120px; /* Ajusta este valor según la altura de tu Navbar */
+}
