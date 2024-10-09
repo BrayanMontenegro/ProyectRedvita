@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Header from './Header'; // Importing your external Header component
+import Footer from './Footer';
 
 const HomeScreen = () => {
   return (
@@ -66,7 +67,7 @@ const HomeScreen = () => {
               <Image source={require('../assets/icono.png')} style={styles.redvitaIcon} />
               <View style={styles.redvitaTextContainer}>
                 <Text style={styles.redvitaTitle}>Redvita</Text>
-                <Text style={styles.redvitaSubtitle}>Te invita a compartir con tus amigos</Text>
+                <Text style={styles.redvitaSubtitle}>Te invita a compartir</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.redvitaButton}>
@@ -74,30 +75,7 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
-
-        {/* Bottom Navigation */}
-        <View style={styles.navbar}>
-          <TouchableOpacity style={styles.navButton}>
-            <Ionicons name="home" size={30} color="#fff" />
-            <Text style={styles.navText}>Inicio</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
-            <Ionicons name="time-outline" size={30} color="#fff" />
-            <Text style={styles.navText}>Historial</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
-            <Ionicons name="chatbox-outline" size={30} color="#fff" />
-            <Text style={styles.navText}>Consultar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
-            <MaterialIcons name="event-available" size={30} color="#fff" />
-            <Text style={styles.navText}>Citas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navButton}>
-            <Ionicons name="location-outline" size={30} color="#fff" />
-            <Text style={styles.navText}>Mapa</Text>
-          </TouchableOpacity>
-        </View>
+        <Footer/>
       </SafeAreaView>
     </View>
   );
@@ -120,8 +98,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#005e72',
     padding: 15,
-    borderRadius: 20,
-    marginHorizontal: 20,
+    borderRadius: 15,
+    marginHorizontal: 12,
     marginTop: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -147,7 +125,7 @@ const styles = StyleSheet.create({
   },
   notificationButtons: {
     flexDirection: 'row',
-    marginHorizontal: 10,
+    marginHorizontal: 15,
   },
   cancelButton: {
     backgroundColor: '#ffffff',
@@ -295,9 +273,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: '#e90101',
     paddingVertical: 15,
-  },
-  navButton: {
-    alignItems: 'center',
   },
   navText: {
     color: '#fff',

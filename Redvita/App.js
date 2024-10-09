@@ -5,6 +5,9 @@ import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "./components/LoginScreen"; // Ajusta la ruta según tu estructura de archivos
 import Registro from "./components/Registro"; // Ajusta la ruta según tu estructura de archivos
 import HomeScreen from "./components/HomeScreen"; // Ajusta la ruta según tu estructura de archivos
+import NotificationCenter from "./components/Notificaciones";
+import AgendarCitaDonacion from "./components/AppointmentScreen";
+import HistoryScreen from "./components/HistoryScreen";
 import * as Font from "expo-font"; // Para cargar fuentes
 import * as SplashScreen from "expo-splash-screen"; // Para controlar la pantalla splash
 import {
@@ -12,6 +15,7 @@ import {
   Montserrat_400Regular,
   Montserrat_700Bold,
 } from "@expo-google-fonts/montserrat";
+import { View } from "react-native";
 
 // Evitar que la pantalla de splash se oculte automáticamente
 SplashScreen.preventAutoHideAsync();
@@ -61,6 +65,24 @@ const App = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="notify"
+          component={NotificationCenter}
+          options={{ headerShown: false }}
+        />
+
+<Stack.Screen 
+          name="Citas"
+          component={AgendarCitaDonacion} 
+          options={{ headerShown: false }} 
+         />
+
+        <Stack.Screen 
+          name="Historial"
+          component={HistoryScreen} 
+          options={{ headerShown: false }} 
+         />
+ 
+        <Stack.Screen
           name="Registro"
           component={Registro}
         />
@@ -71,6 +93,8 @@ const App = () => {
         />
       </Stack.Navigator>
     </NavigationContainer>
+     
+     
   );
 };
 
