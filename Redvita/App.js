@@ -8,6 +8,7 @@ import HomeScreen from "./components/HomeScreen"; // Ajusta la ruta según tu es
 import NotificationCenter from "./components/Notificaciones";
 import AgendarCitaDonacion from "./components/AppointmentScreen";
 import HistoryScreen from "./components/HistoryScreen";
+import Estadisticas from "./components/Estadistica";
 import * as Font from "expo-font"; // Para cargar fuentes
 import * as SplashScreen from "expo-splash-screen"; // Para controlar la pantalla splash
 import {
@@ -64,6 +65,13 @@ const App = () => {
           component={LoginScreen}
           options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name="estady"
+          component={Estadisticas}
+          options={{ headerShown: false }}
+        />
+
         <Stack.Screen
           name="notify"
           component={NotificationCenter}

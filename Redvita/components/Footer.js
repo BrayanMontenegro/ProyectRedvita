@@ -29,9 +29,9 @@ const Footer = () => {
         <Text style={styles.navText}>Citas</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Mapa')}>
-        <Ionicons name="location-outline" size={30} color="#fff" />
-        <Text style={styles.navText}>Mapa</Text>
+      <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('estady')}>
+        <Ionicons name="bar-chart" size={30} color="#fff" />
+        <Text style={styles.navText}>Estadistica</Text>
       </TouchableOpacity>
     </View>
   );

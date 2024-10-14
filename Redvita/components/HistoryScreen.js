@@ -5,7 +5,6 @@ import Footer from './Footer';
 const HistoryScreen = () => {
   return (
     <View style={styles.screenContainer}>
-      <Text>Historial</Text>
       <Footer/>
     </View>
   );
