@@ -7,12 +7,31 @@ import {
   ActivityIndicator,
   SafeAreaView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
+import { LinearGradient } from 'react-native-linear-gradient'; // Importar LinearGradient
 import { getAuth } from "firebase/auth";
 import { query, collection, where, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { db, storage } from "../firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
+
+// Función para obtener el ícono del tipo de sangre
+const getBloodTypeIcon = (bloodType) => {
+  const bloodTypeMap = {
+    'A+': require('../IconTipoSangre/a+.png'),
+    'A-': require('../IconTipoSangre/a-.png'),
+    'B+': require('../IconTipoSangre/b+.png'),
+    'B-': require('../IconTipoSangre/b-.png'),
+    'AB+': require('../IconTipoSangre/ab+.png'),
+    'AB-': require('../IconTipoSangre/ab-.png'),
+    'O+': require('../IconTipoSangre/o+.png'),
+    'O-': require('../IconTipoSangre/o-.png'),
+    'default': require('../IconTipoSangre/default.png'), // Ícono por defecto
+  };
+
+  return bloodTypeMap[bloodType] || bloodTypeMap['default'];
+};
 
 const Header = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
@@ -77,7 +96,7 @@ const Header = ({ navigation }) => {
     return (
       <View style={styles.header}>
         <Text style={styles.errorText}>
-          No se pudieron cargar los datos del usuario
+          Error al cargar los datos del usuario
         </Text>
       </View>
     );
@@ -85,56 +104,53 @@ const Header = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.headerContainer}>
-        {/* Imagen de Perfil */}
-        <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: fotoPerfilUrl || defaultProfileUrl }}
-            style={styles.profileImage}
-          />
-          {/* Tipo de Sangre */}
-          <View style={styles.bloodType}>
-            <Text style={styles.bloodTypeText}>{userData.tipoSangre}</Text>
+      <LinearGradient
+        colors={['#FF5F6D', '#FFC371']} // Colores del gradiente
+        style={styles.gradient}
+      >
+        <View style={styles.headerContainer}>
+          {/* Contenedor de Imagen de Perfil y Tipo de Sangre */}
+          <View style={styles.profileAndBloodTypeContainer}>
+            <Image
+              source={{ uri: fotoPerfilUrl || defaultProfileUrl }}
+              style={styles.profileImage}
+            />
+            {/* Ícono de tipo de sangre sobre la imagen de perfil */}
+            <Image
+              source={getBloodTypeIcon(userData.tipoSangre)}
+              style={styles.bloodTypeIcon}
+            />
           </View>
+          {/* Información del Usuario */}
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>
+              {userData.nombres} {userData.apellidos}
+            </Text>
+            <Text style={styles.userEmail}>{userData.correoElectronico}</Text>
+          </View>
+          {/* Icono de notificaciones */}
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications" size={24} color="white" />
+          </TouchableOpacity>
         </View>
-
-        {/* Información del Usuario */}
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>
-            {userData.nombres} {userData.apellidos}
-          </Text>
-          <Text style={styles.userEmail}>{userData.correoElectronico}</Text>
-          <Text style={styles.userCedula}>Cédula: {userData.numeroCedula}</Text>
-          <Text style={styles.userLocation}>{userData.departamento}</Text>
-        </View>
-
-        {/* Botón de Edición */}
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => navigation.navigate("EditProfile")}
-        >
-          <Ionicons name="pencil" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: "#ffffff",
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    borderRadius: 15,
-    elevation: 5, // Sombra
-  },
-  profileContainer: {
-    alignItems: "center",
+    paddingVertical: 10, // Reducir el espacio vertical para acercar al borde curvo
+    paddingHorizontal: 10,
   },
   profileImage: {
     width: 80,
@@ -143,47 +159,32 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#fff", // Borde blanco para destacar la imagen
   },
-  bloodType: {
-    backgroundColor: "#ffffff", // Fondo blanco para el tipo de sangre
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    marginTop: 5,
-  },
-  bloodTypeText: {
-    color: "#FF6F6F", // Texto rojo para el tipo de sangre
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   userInfo: {
     flex: 1,
     paddingHorizontal: 15,
   },
   userName: {
-    fontSize: 20,
+    fontSize: 18, // Reducir el tamaño del texto del nombre
     fontWeight: "bold",
-    color: "#333", // Texto oscuro para que resalte
+    color: "#ffffff", // Texto blanco para contraste
   },
   userEmail: {
     fontSize: 14,
-    color: "#333",
-    marginBottom: 2,
+    color: "#ffffff", // Texto blanco para contraste
   },
-  userCedula: {
-    fontSize: 12,
-    color: "#333",
+  bloodTypeIcon: {
+    width: 25, // Tamaño ajustado para evitar zoom excesivo
+    height: 25, // Mantener la proporción
+    position: 'absolute',
+    bottom: 2, // Posición ajustada para alineación estética
+    right: 2, // Posición ajustada para alineación estética
+    borderWidth: 1, // Grosor del borde ajustado para un look más fino
+    borderColor: '#fff', // Borde blanco para destacar el ícono
+    borderRadius: 100, // Radio del borde para hacerlo completamente circular
+    backgroundColor: '#fff', // Fondo blanco para mejorar contraste con el ícono rojo
   },
-  userLocation: {
-    fontSize: 12,
-    color: "#333",
-  },
-  editButton: {
-    backgroundColor: "#FF6F6F",
+  notificationButton: {
     padding: 10,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -193,6 +194,9 @@ const styles = StyleSheet.create({
   errorText: {
     color: "red",
     fontSize: 16,
+  },
+  profileAndBloodTypeContainer: {
+    position: 'relative',
   },
 });
 

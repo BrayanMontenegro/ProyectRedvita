@@ -16,6 +16,7 @@ import { db } from "../firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
 import Footer from "./Footer";
 import Header from "./Header";
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AgendarCitaDonacion = () => {
   const [centroDonacion, setCentroDonacion] = useState(""); // Campo para centro de donación
@@ -52,6 +53,20 @@ const AgendarCitaDonacion = () => {
       setLoading(false);
       setErrorMessage("Error al agendar la cita. Inténtalo de nuevo.");
     }
+  };
+
+  const formatDate = (date) => {
+    // Asegúrate de que 'date' es una instancia de Date
+    if (!(date instanceof Date)) {
+      date = new Date(date);
+    }
+  
+    // Formatea la fecha como 'dd/mm/yyyy'
+    let day = ('0' + date.getDate()).slice(-2);
+    let month = ('0' + (date.getMonth() + 1)).slice(-2);
+    let year = date.getFullYear();
+  
+    return `${day}/${month}/${year}`;
   };
 
   // Función para manejar el cambio de fecha
@@ -104,21 +119,42 @@ const AgendarCitaDonacion = () => {
         </View>
 
         {/* Fecha de la cita */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Fecha de la Cita</Text>
-          <Button onPress={showDatepicker} title="Selecciona la fecha" />
 
-          {show && (
-            <DateTimePicker
-              testID="dateTimePicker"
-              value={fecha}
-              mode="date"
-              display="default"
-              onChange={onChange}
-            />
-          )}
-          
-        </View>
+<View style={styles.inputContainer}>
+  <Text style={styles.label}>Fecha de la Cita</Text>
+  <TouchableOpacity
+    onPress={showDatepicker}
+    style={styles.dateButton}
+  >
+    <Text
+      style={
+        fecha
+          ? styles.dateText
+          : styles.placeholderText
+      }
+    >
+      {fecha
+        ? formatDate(fecha) // Usando la función formatDate para formatear la fecha
+        : "Selecciona la fecha"
+      }
+    </Text>
+    <Ionicons
+      name="calendar-outline"
+      size={24}
+      color="gray"
+    />
+  </TouchableOpacity>
+
+  {show && (
+    <DateTimePicker
+      testID="dateTimePicker"
+      value={fecha || new Date()}
+      mode="date"
+      display="default"
+      onChange={onChange}
+    />
+  )}
+</View>
 
         {/* Botón para agendar */}
         <TouchableOpacity
@@ -208,6 +244,28 @@ const styles = StyleSheet.create({
     color: "#e90101",
     fontSize: 14,
     marginTop: 10,
+  },
+  dateButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#fff",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#333",
+    flexGrow: 1,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "#aaa",
+    flexGrow: 1,
   },
 });
 
