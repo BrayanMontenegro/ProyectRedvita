@@ -6,7 +6,7 @@ import LoginScreen from "./components/LoginScreen"; // Ajusta la ruta según tu 
 import Registro from "./components/Registro"; // Ajusta la ruta según tu estructura de archivos
 import HomeScreen from "./components/HomeScreen"; // Ajusta la ruta según tu estructura de archivos
 import NotificationCenter from "./components/Notificaciones";
-import AgendarCitaDonacion from "./components/AppointmentScreen";
+import AgendarCitaDonacion from "./components/AgregarCitasScreen";
 import HistoryScreen from "./components/HistoryScreen";
 import Estadisticas from "./components/Estadistica";
 import * as Font from "expo-font"; // Para cargar fuentes
