@@ -10,73 +10,116 @@ import {
   Button,
   Platform,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker"; // Importamos el nuevo DateTimePicker
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { collection, query, where, getDocs, addDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "../firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
 import Footer from "./Footer";
 import Header from "./Header";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AgendarCitaDonacion = () => {
-  const [centroDonacion, setCentroDonacion] = useState(""); // Campo para centro de donación
-  const [donante, setDonante] = useState(""); // Campo para el nombre del donante
+  const [centroDonacion, setCentroDonacion] = useState("");
   const [fecha, setFecha] = useState(new Date());
-  const [show, setShow] = useState(false); // Controla cuándo mostrar el DateTimePicker
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Estado para manejar los mensajes de error
+  const [errorMessage, setErrorMessage] = useState("");
+  const [descripcion, setDescripcion] = useState("");
 
-  // Función para manejar la cita
+  const getCurrentUserId = async () => {
+    try {
+      const user = await auth.currentUser;
+      return user ? user.uid : null;
+    } catch (error) {
+      console.error("Error al obtener el usuario:", error);
+      return null;
+    }
+  };
+
+  const getUserData = async (userId) => {
+    const q = query(collection(db, "usuario_donante"), where("uid", "==", userId));
+    try {
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        console.log("No se encontraron datos del usuario con UID:", userId);
+        return null;
+      }
+      const userData = querySnapshot.docs[0].data();
+      console.log("Datos del Usuario obtenidos:", userData);
+      return userData;
+    } catch (error) {
+      console.error("Error al obtener datos del usuario:", error);
+      return null;
+    }
+  };
+
   const handleAgendarCita = async () => {
     setErrorMessage("");
     setLoading(true);
 
-    if (!centroDonacion || !donante || !fecha) {
-      setErrorMessage("Por favor, completa todos los campos.");
-      setLoading(false);
-      return;
-    }
-
     try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        console.log("Usuario no logueado.");
+        setLoading(false);
+        setErrorMessage("Usuario no logueado.");
+        return;
+      }
+
+      const userData = await getUserData(userId);
+      if (!userData) {
+        setLoading(false);
+        setErrorMessage("No se encontraron datos del usuario.");
+        return;
+      }
+
+      if (!fecha || !descripcion) {
+        setErrorMessage("Por favor, completa todos los campos.");
+        setLoading(false);
+        return;
+      }
+
       await addDoc(collection(db, "citas_donacion"), {
+        userId,
         centroDonacion,
-        donante,
+        nombresDonante: userData.nombres,
+        apellidoDonante: userData.apellidos,
+        correoDonante: userData.correoElectronico,
+        operadorDonante: userData.tipoOperador,
+        telefonoDonante: userData.telefono,
         fecha,
-        timestamp: new Date(), // Agregar un campo de timestamp para ordenar las citas
+        descripcion,
+        estado: "pendiente",
+        timestamp: new Date(),
       });
       setLoading(false);
       Alert.alert("Éxito", "Cita de donación agendada correctamente.");
-      setCentroDonacion(""); // Limpiar el formulario
-      setDonante("");
+      setCentroDonacion("");
       setFecha(new Date());
+      setDescripcion("");
     } catch (error) {
+      console.error("Error al guardar la cita:", error);
       setLoading(false);
       setErrorMessage("Error al agendar la cita. Inténtalo de nuevo.");
     }
   };
 
   const formatDate = (date) => {
-    // Asegúrate de que 'date' es una instancia de Date
     if (!(date instanceof Date)) {
       date = new Date(date);
     }
-  
-    // Formatea la fecha como 'dd/mm/yyyy'
     let day = ('0' + date.getDate()).slice(-2);
     let month = ('0' + (date.getMonth() + 1)).slice(-2);
     let year = date.getFullYear();
-  
     return `${day}/${month}/${year}`;
   };
 
-  // Función para manejar el cambio de fecha
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || fecha;
-    setShow(Platform.OS === "ios"); // Oculta el DateTimePicker en Android
+    setShow(Platform.OS === "ios");
     setFecha(currentDate);
   };
 
-  // Función para mostrar el selector de fecha
   const showDatepicker = () => {
     setShow(true);
   };
@@ -86,15 +129,33 @@ const AgendarCitaDonacion = () => {
       <View style={styles.container}>
         <Text style={styles.title}>Agendar Cita de Donación</Text>
 
-        {/* Campo para centro de donación */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Centro de Donación</Text>
+          <Text style={styles.label}>Fecha de la Cita</Text>
+          <TouchableOpacity onPress={showDatepicker} style={styles.dateButton}>
+            <Text style={fecha ? styles.dateText : styles.placeholderText}>
+              {fecha ? formatDate(fecha) : "Selecciona la fecha"}
+            </Text>
+            <Ionicons name="calendar-outline" size={24} color="gray" />
+          </TouchableOpacity>
+          {show && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={fecha || new Date()}
+              mode="date"
+              display="default"
+              onChange={onChange}
+            />
+          )}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Descripción de la Cita</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ingresa el centro de donación"
-            value={centroDonacion}
+            placeholder="Ingresa una descripción (opcional)"
+            value={descripcion}
             onChangeText={(text) => {
-              setCentroDonacion(text);
+              setDescripcion(text);
               setErrorMessage("");
             }}
             placeholderTextColor="#aaa"
@@ -102,66 +163,7 @@ const AgendarCitaDonacion = () => {
           />
         </View>
 
-        {/* Campo para el nombre del donante */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Nombre del Donante</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ingresa tu nombre"
-            value={donante}
-            onChangeText={(text) => {
-              setDonante(text);
-              setErrorMessage("");
-            }}
-            placeholderTextColor="#aaa"
-            editable={!loading}
-          />
-        </View>
-
-        {/* Fecha de la cita */}
-
-<View style={styles.inputContainer}>
-  <Text style={styles.label}>Fecha de la Cita</Text>
-  <TouchableOpacity
-    onPress={showDatepicker}
-    style={styles.dateButton}
-  >
-    <Text
-      style={
-        fecha
-          ? styles.dateText
-          : styles.placeholderText
-      }
-    >
-      {fecha
-        ? formatDate(fecha) // Usando la función formatDate para formatear la fecha
-        : "Selecciona la fecha"
-      }
-    </Text>
-    <Ionicons
-      name="calendar-outline"
-      size={24}
-      color="gray"
-    />
-  </TouchableOpacity>
-
-  {show && (
-    <DateTimePicker
-      testID="dateTimePicker"
-      value={fecha || new Date()}
-      mode="date"
-      display="default"
-      onChange={onChange}
-    />
-  )}
-</View>
-
-        {/* Botón para agendar */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleAgendarCita}
-          disabled={loading}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleAgendarCita} disabled={loading}>
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
@@ -170,7 +172,6 @@ const AgendarCitaDonacion = () => {
         </TouchableOpacity>
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-        
       </View>
       <Footer/>
     </LinearGradient>
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   container: {
     width: "90%",
     padding: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "#ffffff",  // Cambiado a blanco
     borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },

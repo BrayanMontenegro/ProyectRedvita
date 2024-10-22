@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { LinearGradient } from 'react-native-linear-gradient'; // Importar LinearGradient
+import { LinearGradient } from 'expo-linear-gradient';
 import { getAuth } from "firebase/auth";
 import { query, collection, where, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
@@ -105,30 +105,26 @@ const Header = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient
-        colors={['#FF5F6D', '#FFC371']} // Colores del gradiente
+        colors={['#FF0000', '#C70039']} // Gradiente de rojo
         style={styles.gradient}
       >
         <View style={styles.headerContainer}>
-          {/* Contenedor de Imagen de Perfil y Tipo de Sangre */}
-          <View style={styles.profileAndBloodTypeContainer}>
+          <View style={styles.profileImageContainer}>
             <Image
               source={{ uri: fotoPerfilUrl || defaultProfileUrl }}
               style={styles.profileImage}
             />
-            {/* Ícono de tipo de sangre sobre la imagen de perfil */}
             <Image
               source={getBloodTypeIcon(userData.tipoSangre)}
               style={styles.bloodTypeIcon}
             />
           </View>
-          {/* Información del Usuario */}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
               {userData.nombres} {userData.apellidos}
             </Text>
             <Text style={styles.userEmail}>{userData.correoElectronico}</Text>
           </View>
-          {/* Icono de notificaciones */}
           <TouchableOpacity style={styles.notificationButton}>
             <Ionicons name="notifications" size={24} color="white" />
           </TouchableOpacity>
@@ -141,47 +137,54 @@ const Header = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   gradient: {
     flex: 1,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    justifyContent: 'center',
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10, // Reducir el espacio vertical para acercar al borde curvo
+    paddingVertical: 10,
     paddingHorizontal: 10,
   },
+  profileImageContainer: {
+    position: 'relative',
+  },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 3,
-    borderColor: "#fff", // Borde blanco para destacar la imagen
+    borderColor: "#fff",
+  },
+  bloodTypeIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#fff",
+    backgroundColor: "#fff",
   },
   userInfo: {
     flex: 1,
     paddingHorizontal: 15,
   },
   userName: {
-    fontSize: 18, // Reducir el tamaño del texto del nombre
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#ffffff", // Texto blanco para contraste
+    color: "#ffffff",
   },
   userEmail: {
     fontSize: 14,
-    color: "#ffffff", // Texto blanco para contraste
-  },
-  bloodTypeIcon: {
-    width: 25, // Tamaño ajustado para evitar zoom excesivo
-    height: 25, // Mantener la proporción
-    position: 'absolute',
-    bottom: 2, // Posición ajustada para alineación estética
-    right: 2, // Posición ajustada para alineación estética
-    borderWidth: 1, // Grosor del borde ajustado para un look más fino
-    borderColor: '#fff', // Borde blanco para destacar el ícono
-    borderRadius: 100, // Radio del borde para hacerlo completamente circular
-    backgroundColor: '#fff', // Fondo blanco para mejorar contraste con el ícono rojo
+    color: "#ffffff",
   },
   notificationButton: {
     padding: 10,
@@ -194,9 +197,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: "red",
     fontSize: 16,
-  },
-  profileAndBloodTypeContainer: {
-    position: 'relative',
   },
 });
 
