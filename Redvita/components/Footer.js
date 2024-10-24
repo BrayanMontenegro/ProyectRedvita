@@ -18,7 +18,7 @@ const Footer = () => {
           <Ionicons name="home" size={30} color="#fff" />
           <Text style={styles.navText}>Inicio</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Historial')}>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Centros')}>
           <Ionicons name="time-outline" size={30} color="#fff" />
           <Text style={styles.navText}>Historial</Text>
         </TouchableOpacity>

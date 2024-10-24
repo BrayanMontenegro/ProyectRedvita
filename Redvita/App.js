@@ -9,6 +9,7 @@ import NotificationCenter from "./components/Notificaciones";
 import AgendarCitaDonacion from "./components/AgregarCitasScreen";
 import HistoryScreen from "./components/HistoryScreen";
 import Estadisticas from "./components/Estadistica";
+import CentrosDonacionMap from "./components/MapaCentros";
 import * as Font from "expo-font"; // Para cargar fuentes
 import * as SplashScreen from "expo-splash-screen"; // Para controlar la pantalla splash
 import {
@@ -78,9 +79,15 @@ const App = () => {
           options={{ headerShown: false }}
         />
 
-<Stack.Screen 
+        <Stack.Screen 
           name="Citas"
           component={AgendarCitaDonacion} 
+          options={{ headerShown: false }} 
+         />
+
+        <Stack.Screen 
+          name="Centros"
+          component={CentrosDonacionMap} 
           options={{ headerShown: false }} 
          />
 
