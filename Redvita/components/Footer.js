@@ -10,7 +10,7 @@ const Footer = () => {
 
   return (
     <LinearGradient
-      colors={['#FF0000', '#C70039']} // Gradiente de rojo
+      colors={['#003153', '#00008B']} // Gradiente de rojo
       style={styles.gradient}
     >
       <View style={styles.navbar}>

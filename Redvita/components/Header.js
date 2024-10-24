@@ -105,7 +105,7 @@ const Header = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient
-        colors={['#FF0000', '#C70039']} // Gradiente de rojo
+        colors={['#C70039', '#C70039']} // Gradiente de rojo
         style={styles.gradient}
       >
         <View style={styles.headerContainer}>

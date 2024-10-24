@@ -56,31 +56,31 @@ const AgendarCitaDonacion = () => {
   const handleAgendarCita = async () => {
     setErrorMessage("");
     setLoading(true);
-
+  
     try {
-      const userId = await getCurrentUserId();
-      if (!userId) {
+      const uid = await getCurrentUserId(); // Cambiado de userId a uid
+      if (!uid) {
         console.log("Usuario no logueado.");
         setLoading(false);
         setErrorMessage("Usuario no logueado.");
         return;
       }
-
-      const userData = await getUserData(userId);
+  
+      const userData = await getUserData(uid); // Cambiado a uid
       if (!userData) {
         setLoading(false);
         setErrorMessage("No se encontraron datos del usuario.");
         return;
       }
-
+  
       if (!fecha || !descripcion) {
         setErrorMessage("Por favor, completa todos los campos.");
         setLoading(false);
         return;
       }
-
+  
       await addDoc(collection(db, "citas_donacion"), {
-        userId,
+        uid, // Aquí asignamos el uid
         centroDonacion,
         nombresDonante: userData.nombres,
         apellidoDonante: userData.apellidos,
@@ -90,8 +90,9 @@ const AgendarCitaDonacion = () => {
         fecha,
         descripcion,
         estado: "pendiente",
-        timestamp: new Date(),
+        timestamp: serverTimestamp(), // Usar serverTimestamp para garantizar hora del servidor
       });
+  
       setLoading(false);
       Alert.alert("Éxito", "Cita de donación agendada correctamente.");
       setCentroDonacion("");
@@ -103,6 +104,7 @@ const AgendarCitaDonacion = () => {
       setErrorMessage("Error al agendar la cita. Inténtalo de nuevo.");
     }
   };
+  
 
   const formatDate = (date) => {
     if (!(date instanceof Date)) {

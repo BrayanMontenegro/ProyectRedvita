@@ -1,0 +1,90 @@
+/* Estilo del contenedor principal */
+.home-container {
+    padding: 40px 20px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+  
+  /* Sección de bienvenida */
+  .welcome-section {
+    background-color: #e90101;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 40px;
+  }
+  
+  .welcome-section h1 {
+    font-size: 3rem;
+    font-weight: bold;
+  }
+  
+  .welcome-section p {
+    font-size: 1.2rem;
+    font-weight: 300;
+  }
+  
+  /* Sección de información */
+  .info-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .info-section h2 {
+    font-size: 2rem;
+    color: #005e72;
+    margin-bottom: 20px;
+  }
+  
+  .info-section p {
+    font-size: 1.1rem;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  /* Sección de llamado a la acción (CTA) */
+  .cta-section {
+    background-color: #005e72;
+    padding: 30px;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cta-section h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .cta-section button {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border-radius: 50px;
+  }
+  
+  .cta-section button:hover {
+    background-color: #004654;
+  }
+  
+  /* Aplicar Montserrat a todo el contenedor principal */
+body, .home-container {
+  font-family: 'Montserrat', sans-serif;
+}
+
+
+
+.cta-section button {
+  font-weight: 500;
+  background-color: #e90101;
+}
+
+.cta-section button:hover {
+  background-color: #c70000;
+}

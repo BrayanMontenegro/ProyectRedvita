@@ -1,0 +1,39 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# dependencies
+node_modules/
+package-lock.json
+
+# local env files
+
+firebaseConfig.js
+
+# build output
+dist/
+build/
+
+# misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# public folder assets
+public/logo192.png
+public/logo512.png
+
+# testing
+coverage/
+*.test.js
+*.spec.js
+
+# editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store

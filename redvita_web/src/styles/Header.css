@@ -1,0 +1,80 @@
+/* Estilo del header */
+.custom-navbar {
+  background-color: #e90101; /* Rojo relacionado con la donación de sangre */
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(216, 202, 202, 0.989);
+}
+
+.custom-navbar .navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo {
+  max-width: 50px;
+  margin-right: 10px;
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+}
+
+.navbar-toggler {
+  border-color: white;
+}
+
+.custom-toggler {
+  border: none;
+}
+
+.nav-link-custom {
+  font-size: 1.2rem;
+  color: white !important;
+  margin-right: 20px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.nav-link-custom:hover {
+  color: #ffc107 !important; /* Amarillo como contraste en hover */
+}
+
+.navbar-collapse {
+  justify-content: flex-end;
+}
+
+.navbar-toggler-icon {
+  background-color: white;
+}
+
+/* Estilo para el dropdown */
+.nav-dropdown {
+  color: white !important;
+}
+
+.nav-dropdown .dropdown-item {
+  color: #000000; /* Cambia si deseas otro color para los enlaces del dropdown */
+  text-transform: capitalize;
+}
+
+.nav-dropdown .dropdown-item:hover {
+  background-color: #ffc107; /* Amarillo en el fondo al hacer hover */
+  color: #e90101; /* Rojo como texto al hacer hover */
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width: 768px) {
+  .custom-navbar {
+      padding: 10px;
+  }
+
+  .nav-link-custom {
+      font-size: 1rem;
+  }
+
+  .brand-name {
+      font-size: 1.2rem;
+  }
+}

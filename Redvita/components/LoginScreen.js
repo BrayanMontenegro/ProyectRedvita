@@ -126,7 +126,7 @@ const LoginScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.createAccountButton}
-          onPress={() => navigation.navigate("notify")}
+          onPress={() => navigation.navigate("Registro")}
           disabled={loading}
         >
           <Text style={styles.createAccountText}>Crear una cuenta</Text>

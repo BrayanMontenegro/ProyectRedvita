@@ -1,52 +1,54 @@
 import React, { useEffect, useState } from "react";
 import { View, FlatList, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { Card } from "react-native-paper";
-import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { getAuth } from "firebase/auth"; // Importar autenticación
 import { db } from "../firebaseConfig";
 import Header from "./Header";
 import Footer from "./Footer";
 
 const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
-  const [citas, setCitas] = useState([]); // Estado para las citas
+  const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const auth = getAuth(); // Obtenemos la instancia de autenticación
+  const user = auth.currentUser; // Usuario autenticado
 
   useEffect(() => {
+    if (!user) {
+      console.error("No hay un usuario autenticado.");
+      return;
+    }
+  
+    const uid = user.uid;
+  
+
     // Consulta para traer notificaciones
     const q = query(collection(db, "notificaciones"), orderBy("timestamp", "desc"));
     const unsubscribeNotifications = onSnapshot(q, (querySnapshot) => {
       const notifList = [];
       querySnapshot.forEach((doc) => {
-        notifList.push({
-          ...doc.data(),
-          id: doc.id,
-        });
+        notifList.push({ ...doc.data(), id: doc.id });
       });
       setNotifications(notifList);
     });
 
-    // Consulta para traer citas de donación
-    const qCitas = query(collection(db, "citas_donacion"), orderBy("fecha", "desc"));
-    const unsubscribeCitas = onSnapshot(qCitas, (querySnapshot) => {
-      const citasList = [];
-      querySnapshot.forEach((doc) => {
-        citasList.push({
-          ...doc.data(),
-          id: doc.id,
-        });
-      });
-      setCitas(citasList);
-      setLoading(false);
+     // Consulta solo con `where` sin `orderBy`
+  const qCitas = query(collection(db, "citas_donacion"), where("uid", "==", uid));
+  const unsubscribeCitas = onSnapshot(qCitas, (querySnapshot) => {
+    const citasList = [];
+    querySnapshot.forEach((doc) => {
+      citasList.push({ ...doc.data(), id: doc.id });
     });
+    citasList.sort((a, b) => b.fecha.seconds - a.fecha.seconds);
 
-    // Limpieza al desmontar el componente
-    return () => {
-      unsubscribeNotifications();
-      unsubscribeCitas();
-    };
-  }, []);
+    setCitas(citasList);
+    setLoading(false);
+  });
 
-  // Función para renderizar una notificación
+  return () => unsubscribeCitas();
+}, [user]);
+
   const renderNotification = ({ item }) => (
     <Card style={styles.card}>
       <Card.Content>
@@ -59,12 +61,11 @@ const NotificationCenter = () => {
     </Card>
   );
 
-  // Función para renderizar una cita
   const renderCita = ({ item }) => (
     <Card style={[styles.card, styles.citaCard]}>
       <Card.Content>
         <Text style={styles.title}>Centro de Donación: {item.centroDonacion}</Text>
-        <Text style={styles.message}>Donante: {item.donante}</Text>
+        <Text style={styles.message}>Donante: {user.displayName || "Anónimo"}</Text>
         <Text style={styles.date}>
           Fecha: {new Date(item.fecha.seconds * 1000).toLocaleDateString()}
         </Text>
@@ -82,22 +83,28 @@ const NotificationCenter = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
+         <View style={styles.containerhed}>
+     <Header />
+     </View>
+     <View style={styles.containernot}> 
       <Text style={styles.sectionTitle}>Notificaciones</Text>
       <FlatList
         data={notifications}
         renderItem={renderNotification}
         keyExtractor={(item) => item.id}
       />
-
-      <Text style={styles.sectionTitle}>Citas de Donación</Text>
+      </View>
+      <View style={styles.containercit}>
+      <Text style={styles.sectionTitle}>Mis Citas de Donación</Text>
       <FlatList
         data={citas}
         renderItem={renderCita}
         keyExtractor={(item) => item.id}
       />
-
-      <Footer />
+      </View>
+        <View style={styles.containerfot}>
+          <Footer />
+        </View>
     </View>
   );
 };
@@ -107,11 +114,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f2f2f2",
   },
+  containernot:{
+    flex:1,
+  },
+  containercit:{
+    flex:1,
+  },
+  containerfot:{
+    flex:0.2,
+    },
+  containerhed:{
+    flex:0.5, 
+    },
   card: {
     marginBottom: 10,
+    borderWidth: 3,
+    borderColor: "#C70039",
   },
   citaCard: {
-    backgroundColor: "#f9e79f", // Color diferente para las citas
+    borderWidth: 3,
+    borderColor: "#003153",
   },
   title: {
     fontSize: 18,
