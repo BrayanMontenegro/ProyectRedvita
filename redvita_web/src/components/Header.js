@@ -28,7 +28,7 @@ function Header() {
       {/* Navbar principal */}
       <Navbar className="custom-navbar" expand="lg" fixed="top">
         <Container>
-          <Navbar.Brand href="#home" className="navbar-brand">
+          <Navbar.Brand href="/home" className="navbar-brand">
             <img src={logo} alt="Logo" className="brand-logo" />
             <span className="brand-name">RedVita</span>
           </Navbar.Brand>
@@ -39,7 +39,7 @@ function Header() {
           />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link as={Link} to="/home" className="nav-link-custom">HOME</Nav.Link>
+              <Nav.Link as={Link} to="/Createcerter" className="nav-link-custom">HOME</Nav.Link>
 
               <NavDropdown title="EVENTOS" id="eventos" className="nav-link-custom nav-dropdown">
                 <NavDropdown.Item as="div">

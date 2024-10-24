@@ -7,7 +7,8 @@ import EducationalModule from './Pages/modulos';
 import ListEducationalModules from './Pages/listarmodulos';
 import CrearNotificacion from './Pages/Notificacion';
 import VerNotificacion from './Pages/ListarNotificacion';
-
+import RegisterCenter from './Pages/RegisterCenter';
+import ListarCentros from './Pages/ListarCenter';
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/donadores" element={<Donadores />} />
         <Route path="/Creanotifi" element={<CrearNotificacion />} />
+        <Route path="/Createcerter" element={<RegisterCenter />} />
+        <Route path="/ListarCen" element={<ListarCentros />} />
         <Route path="/listnoti" element={<VerNotificacion />} />
         <Route path="/ListEducationalModules" element={<ListEducationalModules />} />
         <Route path="/EducationalModule" element={<EducationalModule />} />
