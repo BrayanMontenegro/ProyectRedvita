@@ -19,14 +19,14 @@ import { Ionicons } from "@expo/vector-icons";
 // Función para obtener el ícono del tipo de sangre
 const getBloodTypeIcon = (bloodType) => {
   const bloodTypeMap = {
-    'A+': require('../IconTipoSangre/a+.png'),
-    'A-': require('../IconTipoSangre/a-.png'),
-    'B+': require('../IconTipoSangre/b+.png'),
-    'B-': require('../IconTipoSangre/b-.png'),
-    'AB+': require('../IconTipoSangre/ab+.png'),
-    'AB-': require('../IconTipoSangre/ab-.png'),
-    'O+': require('../IconTipoSangre/o+.png'),
-    'O-': require('../IconTipoSangre/o-.png'),
+    'A+': require('../IconTipoSangre/a+.jpg'),
+    'A-': require('../IconTipoSangre/a-.jpg'),
+    'B+': require('../IconTipoSangre/b+.jpg'),
+    'B-': require('../IconTipoSangre/b-.jpg'),
+    'AB+': require('../IconTipoSangre/ab+.jpg'),
+    'AB-': require('../IconTipoSangre/ab-.jpg'),
+    'O+': require('../IconTipoSangre/o+.jpg'),
+    'O-': require('../IconTipoSangre/o-.jpg'),
     'default': require('../IconTipoSangre/default.png'), // Ícono por defecto
   };
 
