@@ -39,8 +39,14 @@ function Header() {
           />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link as={Link} to="/Createcerter" className="nav-link-custom">HOME</Nav.Link>
-
+            <NavDropdown title="Centros Donacion" id="eventos" className="nav-link-custom nav-dropdown">
+                <NavDropdown.Item as="div">
+                  <Link to="/ListarCen" className="link-unstyled">lista de Centros Donacion</Link>
+                </NavDropdown.Item>
+                <NavDropdown.Item as="div">
+                  <Link to="/Createcerter" className="link-unstyled">Crear Centros Donacion</Link>
+                </NavDropdown.Item>
+              </NavDropdown>
               <NavDropdown title="EVENTOS" id="eventos" className="nav-link-custom nav-dropdown">
                 <NavDropdown.Item as="div">
                   <Link to="/listnoti" className="link-unstyled">Ver Notificaciones</Link>

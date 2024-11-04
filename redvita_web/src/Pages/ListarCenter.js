@@ -89,8 +89,8 @@ const ListarCentros = () => {
                   Ubicar
                 </button>
                 <button
-                  className="btn btn-primary btn-sm me-2"
-                  onClick={() => handleEditar(centro)}
+                    className="btn btn-success btn-sm me-2"
+                    onClick={() => handleEditar(centro)}
                 >
                   Editar
                 </button>

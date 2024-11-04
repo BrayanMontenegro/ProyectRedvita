@@ -2,7 +2,7 @@
 .custom-navbar {
   background-color: #e90101; /* Rojo relacionado con la donación de sangre */
   padding: 15px;
-  box-shadow: 0 4px 8px rgba(216, 202, 202, 0.989);
+  box-shadow: 0 4px 8px rgba(252, 250, 250, 0.989);
 }
 
 .custom-navbar .navbar-brand {
@@ -38,7 +38,7 @@
 }
 
 .nav-link-custom:hover {
-  color: #ffc107 !important; /* Amarillo como contraste en hover */
+  color: #384f5b !important; /* Amarillo como contraste en hover */
 }
 
 .navbar-collapse {
