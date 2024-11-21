@@ -10,7 +10,7 @@ const Footer = () => {
 
   return (
     <LinearGradient
-      colors={['#003153', '#00008B']} // Gradiente de rojo
+      colors={['#003153', '#00008B']} 
       style={styles.gradient}
     >
       <View style={styles.navbar}>
@@ -19,12 +19,12 @@ const Footer = () => {
           <Text style={styles.navText}>Inicio</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Centros')}>
-          <Ionicons name="time-outline" size={30} color="#fff" />
-          <Text style={styles.navText}>Historial</Text>
+          <Ionicons name="map" size={30} color="#fff" />
+          <Text style={styles.navText}>Mapa</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('notify')}>
-          <Ionicons name="chatbox-outline" size={30} color="#fff" />
-          <Text style={styles.navText}>Consultar</Text>
+        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Historialdonacion')}>
+          <Ionicons name="time" size={30} color="#fff" />
+          <Text style={styles.navText}>Historial</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Citas')}>
           <MaterialIcons name="event-available" size={30} color="#fff" />

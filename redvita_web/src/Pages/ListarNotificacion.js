@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig'; // Asegúrate de que la ruta sea correcta
 import Header from '../components/Header';
+import { Button} from "react-bootstrap";
+
 
 const VerNotificacion = () => {
   const [notificaciones, setNotificaciones] = useState([]);
@@ -95,14 +97,15 @@ const VerNotificacion = () => {
               required
             ></textarea>
           </div>
-          <button type="submit" className="btn btn-primary">Actualizar Notificación</button>
-          <button
+          <Button type="submit"  variant="success">
+            Actualizar Notificación</Button>
+          <Button
+          variant="danger"
             type="button"
-            className="btn btn-secondary ms-2"
             onClick={() => setEditMode(false)}
           >
             Cancelar
-          </button>
+          </Button>
         </form>
       ) : (
         <table className="table table-striped">
@@ -121,18 +124,18 @@ const VerNotificacion = () => {
                 <td>{notificacion.mensaje}</td>
                 <td>{new Date(notificacion.timestamp.seconds * 1000).toLocaleString()}</td>
                 <td>
-                  <button
-                    className="btn btn-warning btn-sm me-2"
+                  <Button
+                    variant="info"
                     onClick={() => handleEditar(notificacion)}
                   >
                     Editar
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={() => handleEliminar(notificacion.id)}
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}

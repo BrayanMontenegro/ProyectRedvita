@@ -28,7 +28,7 @@ function Header() {
       {/* Navbar principal */}
       <Navbar className="custom-navbar" expand="lg" fixed="top">
         <Container>
-          <Navbar.Brand href="#home" className="navbar-brand">
+          <Navbar.Brand href="/home" className="navbar-brand">
             <img src={logo} alt="Logo" className="brand-logo" />
             <span className="brand-name">RedVita</span>
           </Navbar.Brand>
@@ -39,14 +39,23 @@ function Header() {
           />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link as={Link} to="/home" className="nav-link-custom">HOME</Nav.Link>
-
+            <NavDropdown title="CENTROS DONACION" id="eventos" className="nav-link-custom nav-dropdown">
+                <NavDropdown.Item as="div">
+                  <Link to="/ListarCen" className="link-unstyled">lista de Centros Donacion</Link>
+                </NavDropdown.Item>
+                <NavDropdown.Item as="div">
+                  <Link to="/Createcerter" className="link-unstyled">Crear Centros Donacion</Link>
+                </NavDropdown.Item>
+              </NavDropdown>
               <NavDropdown title="EVENTOS" id="eventos" className="nav-link-custom nav-dropdown">
                 <NavDropdown.Item as="div">
                   <Link to="/listnoti" className="link-unstyled">Ver Notificaciones</Link>
                 </NavDropdown.Item>
                 <NavDropdown.Item as="div">
                   <Link to="/Creanotifi" className="link-unstyled">Crear Notificacion</Link>
+                </NavDropdown.Item>
+                <NavDropdown.Item as="div">
+                  <Link to="/Citas" className="link-unstyled">Gestionar Citas</Link>
                 </NavDropdown.Item>
               </NavDropdown>
 

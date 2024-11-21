@@ -9,6 +9,8 @@ import NotificationCenter from "./components/Notificaciones";
 import AgendarCitaDonacion from "./components/AgregarCitasScreen";
 import HistoryScreen from "./components/HistoryScreen";
 import Estadisticas from "./components/Estadistica";
+import RedVitaScreen from "./components/ChatScreen";
+import HistorialDonaciones from "./components/HistorialDonacion";
 import CentrosDonacionMap from "./components/MapaCentros";
 import * as Font from "expo-font"; // Para cargar fuentes
 import * as SplashScreen from "expo-splash-screen"; // Para controlar la pantalla splash
@@ -96,16 +98,30 @@ const App = () => {
           component={HistoryScreen} 
           options={{ headerShown: false }} 
          />
- 
+
+        <Stack.Screen 
+          name="Historialdonacion"
+          component={HistorialDonaciones} 
+          options={{ headerShown: false }} 
+         />
+
         <Stack.Screen
           name="Registro"
           component={Registro}
         />
+
         <Stack.Screen
           name="Home"
           component={HomeScreen}
           options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name="Chat"
+          component={RedVitaScreen}
+          options={{ headerShown: false }}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
      

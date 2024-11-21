@@ -1,53 +1,63 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Header from './Header'; // Importing your external Header component
-import Footer from './Footer'; // Importing your external Footer component
+import Header from './Header';
+import Footer from './Footer';
+import { useNavigation } from '@react-navigation/native';
+
+const screenWidth = Dimensions.get('window').width;
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
+
+  const images = [
+    require('../icons/Modulos/1.png'),
+    require('../icons/Modulos/2.png'),
+    require('../icons/Modulos/3.png'),
+    require('../icons/Modulos/4.png'),
+  ];
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Integrating the Header component at the top */}
         <Header />
 
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          {/* Emergency Card */}
-          <View style={styles.emergencyContainer}>
-            <View style={styles.placeholderIconContainer}>
-              <Ionicons name="image-outline" size={80} color="#ccc" />
-            </View>
-            <View style={styles.emergencyBottomContainer}>
-              <TouchableOpacity style={styles.arrowButton}>
-                <Ionicons name="chevron-back-outline" size={24} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.arrowButton}>
-                <Ionicons name="chevron-forward-outline" size={24} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.viewButton}>
-                <Text style={styles.viewText}>VER</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity style={styles.emergencyButton}>
-              <Text style={styles.emergencyButtonText}>EMERGENCIA</Text>
-              <Ionicons name="alert-outline" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.emergencyContainer}>
+        <Text style={styles.redvitaTitle} >Conoce mas de nosotros</Text>
 
-          {/* Redvita Button */}
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContent}
+            >
+              {images.map((image, index) => (
+                <Image
+                  key={index}
+                  source={image}
+                  style={styles.carouselImage}
+                />
+              ))}
+            </ScrollView>
+      </View>
+
+
           <View style={styles.redvitaContainer}>
             <View style={styles.redvitaInfo}>
-              <Image source={require('../assets/icono.png')} style={styles.redvitaIcon} />
+              <Image source={require('../assets/yu.jpg')} style={styles.redvitaIcon} />
               <View style={styles.redvitaTextContainer}>
                 <Text style={styles.redvitaTitle}>Redvita</Text>
-                <Text style={styles.redvitaSubtitle}>Te invita a compartir</Text>
+                <Text style={styles.redvitaSubtitle}>Soy Yu asistente de redvita</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.redvitaButton}>
+            <TouchableOpacity style={styles.redvitaButton} 
+               onPress={() => navigation.navigate('Chat')}>
               <Text style={styles.redvitaButtonText}>IR</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
+
         <Footer />
       </SafeAreaView>
     </View>
@@ -58,13 +68,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    marginTop:5,
   },
   safeArea: {
     flex: 1,
   },
+  Lebel:{
+    fontSize:18,
+    color:"#005e72"
+  },
   scrollViewContent: {
     paddingBottom: 20,
   },
+  carouselContent: {
+
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+carouselImage: {
+  width: 300,
+  height: 300,
+  borderRadius: 10,
+  marginHorizontal: 10,
+  resizeMode: 'cover',
+},
+
   emergencyContainer: {
     backgroundColor: '#f2f2f2',
     padding: 15,
@@ -94,12 +122,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   arrowButton: {
-    backgroundColor: '#007bff', // Azul brillante para mayor visibilidad
+    backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 30,
   },
   viewButton: {
-    backgroundColor: '#28a745', // Verde vibrante para el botón de acción
+    backgroundColor: '#28a745',
     paddingHorizontal: 30,
     paddingVertical: 10,
     borderRadius: 50,
@@ -111,7 +139,7 @@ const styles = StyleSheet.create({
   },
   emergencyButton: {
     flexDirection: 'row',
-    backgroundColor: '#dc3545', // Rojo intenso para emergencias
+    backgroundColor: '#dc3545',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 50,
@@ -163,7 +191,7 @@ const styles = StyleSheet.create({
     color: '#005e72',
   },
   redvitaButton: {
-    backgroundColor: '#17a2b8', // Azul turquesa para un toque fresco
+    backgroundColor: '#005e72',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 50,

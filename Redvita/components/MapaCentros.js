@@ -45,6 +45,7 @@ const CentrosDonacionMap = () => {
         <Text style={styles.message}>{item.ubicacion}</Text>
         <View style={styles.buttonContainer}>
           <Button
+            color={"#003153"}
             title="Ubicar"
             onPress={() => handleLocateCenter(item.latitud, item.longitud)}
           />
@@ -112,6 +113,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f2f2f2",
+    marginTop : 11,
   },
   map: {
     borderWidth:3,
@@ -143,10 +145,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-  },
+    color: "#005e72",
+    },
   message: {
     fontSize: 14,
     marginTop: 5,
+    fontWeight: "bold",
+    color: "#005e72",
   },
   buttonContainer: {
     marginTop: 10,

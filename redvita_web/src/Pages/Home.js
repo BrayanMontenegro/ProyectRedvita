@@ -39,7 +39,6 @@ const Home = () => {
       {/* Sección de CTA (Call to Action) */}
       <div className="text-center mt-5 cta-section">
         <h3>¡Únete a nuestra comunidad y ayuda a salvar vidas!</h3>
-        <button className="btn btn-primary btn-lg mt-3">Regístrate Ahora</button>
       </div>
     </div>
   );

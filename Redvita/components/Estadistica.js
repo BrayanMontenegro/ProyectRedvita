@@ -1,26 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Text } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, ScrollView, Button, Alert } from 'react-native';
 import GraficoTiposSangre from './GraficosTipodesangre';
 import GraficoGeneros from './GraficosGeneros';
+import GraficoDonaciones from './GraficoHistorialDonaciones';
 import Footer from './Footer';
-import { collection, getDocs, query } from 'firebase/firestore';
-
-
-//Importación de conexión a firebase
+import Header from "./Header";
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
+import { jsPDF } from 'jspdf';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function Estadisticas() {
-
-  const [bandera, setBandera] = useState(false); // Variable bandera
   const [dataGeneros, setDataGeneros] = useState([]);
   const [dataProgreso, setDataProgreso] = useState({
     labels: [''],
     data: [0]
-  });
+  }); 
   const [dataTiposSangre, setDataTiposSangre] = useState({
     labels: [],
-    datasets: [{ data: [] }] // Inicializa datasets como un array con un objeto
+    datasets: [{ data: [] }]
   });
+  const [dataDonaciones, setDataDonaciones] = useState([]);
+
+  const generarPDF = async () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Reporte de Donaciones", 10, 10);
+
+      let yPosition = 20;
+
+      if (dataDonaciones.length > 0) {
+        dataDonaciones.forEach(({ date, count }, index) => {
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.text(`${index + 1}. Fecha: ${new Date(date.seconds * 1000).toLocaleDateString()}`, 10, yPosition);
+          doc.text(`   Cantidad: ${count}`, 10, yPosition + 10);
+          yPosition += 20;
+        });
+      } else {
+        doc.text("No hay donaciones registradas.", 10, yPosition);
+      }
+
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      const fileUri = `${FileSystem.documentDirectory}reporte_donaciones.pdf`;
+
+      await FileSystem.writeAsStringAsync(fileUri, pdfBase64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await Sharing.shareAsync(fileUri);
+    } catch (error) {
+      console.error("Error al generar o compartir el PDF: ", error);
+      Alert.alert('Error', 'No se pudo generar o compartir el PDF.');
+    }
+  };
 
   useEffect(() => {
     const recibirDatosGeneros = async () => {
@@ -31,37 +70,30 @@ export default function Estadisticas() {
         let femenino = 0;
 
         querySnapshot.forEach((doc) => {
-          const datosBD = doc.data();
-          const { genero } = datosBD;
-
-          if (genero === "Masculino") {
-            masculino += 1; // Suma para Masculino
-          } else if (genero === "Femenino") {
-            femenino += 1; // Suma para Femenino
-          }
+          const { genero } = doc.data();
+          if (genero === "Masculino") masculino += 1;
+          if (genero === "Femenino") femenino += 1;
         });
 
-        // Formatear datos para el gráfico de pastel
         const totalData = [
           {
             name: "Masculino",
             population: masculino,
-            color: "rgba(131, 167, 234, 0.5)",  // Azul con 50% de intensidad
-            legendFontColor: "#7F7F7F",
-            legendFontSize: 12
+            color: "#00008B",
+            legendFontColor: "#005e72",
+            legendFontSize: 10
           },
           {
             name: "Femenino",
             population: femenino,
-            color: "rgba(255, 105, 180, 0.5)",  // Rosa con 50% de intensidad
-            legendFontColor: "#7F7F7F",
-            legendFontSize: 12
+            color: "#C70039",
+            legendFontColor: "#005e72",
+            legendFontSize: 10
           }
         ];
 
-        totalPersonas = masculino + femenino;
-
-        const progresos = [masculino/totalPersonas, femenino/totalPersonas]
+        const totalPersonas = masculino + femenino;
+        const progresos = [masculino / totalPersonas, femenino / totalPersonas];
 
         setDataProgreso({
           labels: ['Hombres', 'Mujeres'],
@@ -69,74 +101,63 @@ export default function Estadisticas() {
         });
 
         setDataGeneros(totalData);
-        console.log(totalData);
       } catch (error) {
         console.error("Error al obtener documentos: ", error);
       }
     };
 
     recibirDatosGeneros();
-  }, [bandera]);
+  }, []);
 
-  // Carga de datos de tipos de sangre
-  useEffect(() => {
-    const recibirDatosTiposSangre = async () => {
-      try {
-        const q = query(collection(db, "usuario_donante"));
-        const querySnapshot = await getDocs(q);
+  useFocusEffect(
+    useCallback(() => {
+      const recibirDatosDonaciones = async () => {
+        try {
+          const auth = getAuth();
+          const user = auth.currentUser;
+          if (user) {
+            const userId = user.uid;
+            const q = query(
+              collection(db, "historial_donaciones"),
+              where("userId", "==", userId)
+            );
+            const querySnapshot = await getDocs(q);
+            const donaciones = [];
 
-        // Inicializa el conteo de tipos de sangre con todos los tipos posibles
-        const conteoTiposSangre = {
-          "A+": 0,
-          "A-": 0,
-          "B+": 0,
-          "B-": 0,
-          "AB+": 0,
-          "AB-": 0,
-          "O+": 0,
-          "O-": 0
-        };
+            querySnapshot.forEach((doc) => {
+              const { fecha, cantidad } = doc.data();
+              donaciones.push({ date: fecha, count: cantidad });
+            });
 
-        // Realiza el conteo de cada tipo de sangre
-        querySnapshot.forEach((doc) => {
-          const datosBD = doc.data();
-          const { tipoSangre } = datosBD;
-
-          if (tipoSangre && conteoTiposSangre.hasOwnProperty(tipoSangre)) {
-            // Incrementa el conteo del tipo de sangre
-            conteoTiposSangre[tipoSangre] += 1;
+            setDataDonaciones(donaciones);
+          } else {
+            console.log("Usuario no autenticado");
           }
-        });
+        } catch (error) {
+          console.error("Error al obtener documentos: ", error);
+        }
+      };
 
-        // Genera las etiquetas y datos a partir del conteo
-        const labels = Object.keys(conteoTiposSangre);
-        const dataCounts = Object.values(conteoTiposSangre);
+      recibirDatosDonaciones();
+    }, [])
+  );
 
-        // Actualiza el estado con el formato requerido
-        setDataTiposSangre({
-          labels,
-          datasets: [{ data: dataCounts }]
-        });
-
-        console.log({ labels, datasets: [{ data: dataCounts }] });
-      } catch (error) {
-        console.error("Error al obtener documentos: ", error);
-      }
-    };
-
-    recibirDatosTiposSangre();
-  }, [bandera]);
-
-  
-  //Llamado de componentes
   return (
-    <View style={styles.container} >
-
-        <GraficoTiposSangre dataTiposSangre={dataTiposSangre}/>
-        <GraficoGeneros dataGeneros={dataGeneros}/>
-
-        <Footer/>
-
+    <View style={styles.container}>
+      <View style={styles.containerhed}>
+        <Header />
+      </View>
+      <View style={styles.container1}>
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <GraficoGeneros dataGeneros={dataGeneros} />
+          <GraficoDonaciones dataDonaciones={dataDonaciones} />
+          <GraficoTiposSangre dataTiposSangre={dataTiposSangre} />
+          <Button title="Generar PDF" onPress={generarPDF} />
+        </ScrollView>
+      </View>
+      <View style={styles.containerfot}>
+        <Footer />
+      </View>
     </View>
   );
 }
@@ -144,15 +165,22 @@ export default function Estadisticas() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  container1: {
+    flex: 1,
     backgroundColor: '#fff',
   },
   scrollView: {
-    padding: 10,
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
   },
-  graphContainer: {
-    marginTop: 10,
-    padding: 10,
+  containerfot:{
+    flex:0.1,
+  },
+  containerhed:{
+    flex:0.2, 
   },
 });

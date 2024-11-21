@@ -110,7 +110,7 @@ const ListEducationalModules = () => {
                                 ) : (
                                     <>
                                         <Button
-                                            variant="warning"
+                                            variant="info"
                                             onClick={() => handleEdit(module)}
                                             className="me-2"
                                         >

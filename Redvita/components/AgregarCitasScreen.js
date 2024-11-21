@@ -7,16 +7,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Button,
-  Platform,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { collection, query, where, getDocs, addDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
-import { LinearGradient } from "expo-linear-gradient";
 import Footer from "./Footer";
 import Header from "./Header";
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const AgendarCitaDonacion = () => {
   const [centroDonacion, setCentroDonacion] = useState("");
@@ -56,31 +53,31 @@ const AgendarCitaDonacion = () => {
   const handleAgendarCita = async () => {
     setErrorMessage("");
     setLoading(true);
-  
+
     try {
-      const uid = await getCurrentUserId(); // Cambiado de userId a uid
+      const uid = await getCurrentUserId();
       if (!uid) {
         console.log("Usuario no logueado.");
         setLoading(false);
         setErrorMessage("Usuario no logueado.");
         return;
       }
-  
-      const userData = await getUserData(uid); // Cambiado a uid
+
+      const userData = await getUserData(uid);
       if (!userData) {
         setLoading(false);
         setErrorMessage("No se encontraron datos del usuario.");
         return;
       }
-  
+
       if (!fecha || !descripcion) {
         setErrorMessage("Por favor, completa todos los campos.");
         setLoading(false);
         return;
       }
-  
+
       await addDoc(collection(db, "citas_donacion"), {
-        uid, // Aquí asignamos el uid
+        uid,
         centroDonacion,
         nombresDonante: userData.nombres,
         apellidoDonante: userData.apellidos,
@@ -90,9 +87,9 @@ const AgendarCitaDonacion = () => {
         fecha,
         descripcion,
         estado: "pendiente",
-        timestamp: serverTimestamp(), // Usar serverTimestamp para garantizar hora del servidor
+        timestamp: serverTimestamp(),
       });
-  
+
       setLoading(false);
       Alert.alert("Éxito", "Cita de donación agendada correctamente.");
       setCentroDonacion("");
@@ -104,7 +101,6 @@ const AgendarCitaDonacion = () => {
       setErrorMessage("Error al agendar la cita. Inténtalo de nuevo.");
     }
   };
-  
 
   const formatDate = (date) => {
     if (!(date instanceof Date)) {
@@ -118,22 +114,21 @@ const AgendarCitaDonacion = () => {
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || fecha;
-    setShow(Platform.OS === "ios");
+    setShow(false);
     setFecha(currentDate);
   };
 
-  const showDatepicker = () => {
-    setShow(true);
-  };
-
   return (
-    <LinearGradient colors={["#005e72", "#e90101"]} style={styles.gradientBackground}>
-      <View style={styles.container}>
+    <View style={styles.container}>
+         <View style={styles.containerhed}>
+     <Header />
+     </View>
+      <View style={styles.innerContainer}>
         <Text style={styles.title}>Agendar Cita de Donación</Text>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Fecha de la Cita</Text>
-          <TouchableOpacity onPress={showDatepicker} style={styles.dateButton}>
+          <TouchableOpacity onPress={() => setShow(true)} style={styles.dateButton}>
             <Text style={fecha ? styles.dateText : styles.placeholderText}>
               {fecha ? formatDate(fecha) : "Selecciona la fecha"}
             </Text>
@@ -154,7 +149,7 @@ const AgendarCitaDonacion = () => {
           <Text style={styles.label}>Descripción de la Cita</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ingresa una descripción (opcional)"
+            placeholder="Ingresa una descripción"
             value={descripcion}
             onChangeText={(text) => {
               setDescripcion(text);
@@ -175,21 +170,21 @@ const AgendarCitaDonacion = () => {
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       </View>
-      <Footer/>
-    </LinearGradient>
+      <Footer />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   container: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
+    marginTop:5,
+  },
+  innerContainer: {
     width: "90%",
     padding: 20,
-    backgroundColor: "#ffffff",  // Cambiado a blanco
+    backgroundColor: "#ffffff",
     borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
@@ -197,11 +192,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
     alignItems: "center",
+    alignSelf: "center",
+    marginVertical: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#333",
+    color: "#005e72",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -214,6 +211,12 @@ const styles = StyleSheet.create({
     color: "#005e72",
     marginBottom: 5,
   },
+  containerfot:{
+    flex:0.2,
+    },
+  containerhed:{
+    flex:0.4, 
+    },
   input: {
     width: "100%",
     height: 50,
@@ -225,14 +228,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  datePicker: {
-    width: "100%",
-    marginBottom: 20,
-  },
   button: {
     width: "100%",
     height: 50,
-    backgroundColor: "#e90101",
+    backgroundColor: "#004D40",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 50,

@@ -1,76 +1,85 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig'; // Importa correctamente tu configuración de Firebase
-import '../styles/Login.css'; // Importamos el archivo CSS para los estilos
+import React, { useState } from "react";
+import bcrypt from "bcryptjs";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+import { Form, Button, Container, Alert, Card } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import "../styles/Login.css";
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
+const LoginAdmin = () => {
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+    setError("");
+
     try {
-      // Intentar iniciar sesión con Firebase Authentication
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/home'); // Redirigir al home si el inicio de sesión es exitoso
-    } catch (error) {
-      setError('Error al iniciar sesión. Verifica tus credenciales.');
-      console.error('Error al iniciar sesión:', error);
+      //? Consultar Firestore para encontrar al administrador
+      const q = query(collection(db, "admins"), where("correo", "==", correo));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setError("Correo no encontrado o no autorizado.");
+        return;
+      }
+
+      const adminDoc = querySnapshot.docs[0];
+      const adminData = adminDoc.data();
+
+      //? Comparar la contraseña encriptada
+      const isValidPassword = await bcrypt.compare(password, adminData.password);
+
+      if (isValidPassword) {
+        navigate("/Home");
+      } else {
+        setError("Contraseña incorrecta.");
+      }
+    } catch (err) {
+      console.error("Error durante el inicio de sesión:", err);
+      setError("Ocurrió un error al intentar iniciar sesión.");
     }
   };
 
   return (
-    <div className="gradient-background">
-      <div className="login-container">
-        <h2 className="login-title">Iniciar Sesión</h2>
-
-        {error && <p className="error-message">{error}</p>} {/* Mostrar errores */}
-
-        <form onSubmit={handleLogin}>
-          <div className="input-container">
-            <label>Email</label>
-            <input
-              type="email"
-              className="input"
-              placeholder="Ingresa tu correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="input-container">
-            <label>Contraseña</label>
-            <div className="password-container">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="input"
-                placeholder="Ingresa tu contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <span
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </span>
-            </div>
-          </div>
-
-          <button type="submit" className="login-button">
-            Iniciar Sesión
-          </button>
-        </form>
-      </div>
+    <div className="login-background">
+      <Container className="d-flex justify-content-center align-items-center min-vh-100">
+        <Card className="p-4 shadow-lg login-card">
+          <Card.Body>
+            <h2 className="text-center mb-4">Inicio de Sesión</h2>
+            <Form onSubmit={handleLogin}>
+              {error && <Alert variant="danger">{error}</Alert>}
+              <Form.Group className="mb-3" controlId="formCorreo">
+                <Form.Label>Correo Electrónico</Form.Label>
+                <Form.Control
+                  type="email"
+                  placeholder="Ingrese su correo"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="formPassword">
+                <Form.Label>Contraseña</Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="Ingrese su contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </Form.Group>
+              <Button type="submit" variant="primary" className="w-100">
+                Iniciar Sesión
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      </Container>
     </div>
   );
 };
 
-export default Login;
+export default LoginAdmin;

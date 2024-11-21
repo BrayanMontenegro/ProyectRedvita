@@ -64,8 +64,9 @@ const NotificationCenter = () => {
   const renderCita = ({ item }) => (
     <Card style={[styles.card, styles.citaCard]}>
       <Card.Content>
-        <Text style={styles.title}>Centro de Donación: {item.centroDonacion}</Text>
-        <Text style={styles.message}>Donante: {user.displayName || "Anónimo"}</Text>
+        <Text style={styles.title}>Cita de {item.nombresDonante}</Text>
+        <Text style={styles.message}>Estado: {item.estado || ""}</Text>
+        <Text style={styles.message}>Centro: {item.centroDonacion || "en espera"}</Text>
         <Text style={styles.date}>
           Fecha: {new Date(item.fecha.seconds * 1000).toLocaleDateString()}
         </Text>
@@ -102,9 +103,9 @@ const NotificationCenter = () => {
         keyExtractor={(item) => item.id}
       />
       </View>
-        <View style={styles.containerfot}>
-          <Footer />
-        </View>
+          <View style={styles.containerfot}>
+            <Footer />
+          </View>
     </View>
   );
 };
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     flex:1,
   },
   containerfot:{
-    flex:0.2,
+    flex:0.27,
     },
   containerhed:{
     flex:0.5, 

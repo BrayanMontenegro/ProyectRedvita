@@ -1,27 +1,28 @@
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet,Text, View, Dimensions } from 'react-native';
 import { PieChart } from "react-native-chart-kit";
 
 export default function GraficoGeneros({ dataGeneros }) {
-
-  let screenWidth = Dimensions.get("window").width;
+  const screenWidth = Dimensions.get("window").width;
 
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>   Grafico de Generos registrados 👩🧔</Text>
       <PieChart
         data={dataGeneros}
         width={screenWidth - (screenWidth * 0.1)}
-        height={300}
+        height={250}
         chartConfig={{
-          backgroundColor: "#FF4444",  // Color de fondo (no afecta los cuadrados)
-          backgroundGradientFrom: "#f0f0f0",  // Color inicial del gradiente
-          backgroundGradientTo: "#f0f0f0",    // Color final del gradiente
-          color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,  // Cambia los cuadrados del gráfico
+          backgroundColor: "#0000",
+          backgroundGradientFrom: "#f5f5f5",
+          backgroundGradientTo: "#f5f5f5",
+          color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
         }}
         accessor={"population"}
         paddingLeft={45}
         backgroundColor={"transparent"}
         style={{
-          borderRadius: 10
+          borderRadius: 20,
+          overflow: 'hidden',
         }}
       />
     </View>
@@ -30,6 +31,16 @@ export default function GraficoGeneros({ dataGeneros }) {
 
 const styles = StyleSheet.create({
   container: {
-    margin: 10
+    flex: 1,
+    margin: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0)', // Suave fondo rojo claro
+    borderRadius: 10, // Bordes redondeados // Espacio alrededor del gráfico
+    shadowColor: '#000', // Color de la sombra
+    shadowOffset: { width: 0, height: 5 },
+  },
+
+  label: {
+    fontWeight: "bold",
+    color: "#005e72",
   },
 });

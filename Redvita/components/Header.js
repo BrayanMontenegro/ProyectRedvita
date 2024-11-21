@@ -15,6 +15,8 @@ import { query, collection, where, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { db, storage } from "../firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from '@react-navigation/native';
+
 
 // Función para obtener el ícono del tipo de sangre
 const getBloodTypeIcon = (bloodType) => {
@@ -33,14 +35,16 @@ const getBloodTypeIcon = (bloodType) => {
   return bloodTypeMap[bloodType] || bloodTypeMap['default'];
 };
 
-const Header = ({ navigation }) => {
+const Header = () => {
+  const navigation = useNavigation();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
-
   const defaultProfileUrl = Image.resolveAssetSource(
     require("../assets/revita.png")
   ).uri;
+
+  
 
   useEffect(() => {
     const obtenerDatosUsuario = async () => {
@@ -125,8 +129,9 @@ const Header = ({ navigation }) => {
             </Text>
             <Text style={styles.userEmail}>{userData.correoElectronico}</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications" size={24} color="white" />
+          <TouchableOpacity style={styles.notificationButton}
+           onPress={() => navigation.navigate('notify')}>
+            <Ionicons  name="notifications" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
