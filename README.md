@@ -37,8 +37,8 @@
 ## 📂 Pasos de intalacion:
 - 🩸 **Proyecto Redvita**: puedes clonar este repositorio en bash [Ir al repo](https://github.com/BrayanMontenegro/ProyectRedvita.git)
   intalar dependecias con "npm install" desde cmd si dada problemas se recomienda un "npm install --force"
-  para graderar la app se recomienda <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo"> [version 51](https://expo.dev/go?sdkVersion=51&platform=android&device=true)
-- 📊 **descarga de aplicacion movil**: deacargar app desde la pagina de [expo](https://expo.dev/accounts/orekihotaru/projects/redvita/builds/c822cdc0-ccc9-48e0-8c89-d936acb2dc73) 
+  para graderar la app se recomienda <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" alt="Expo"> version 51 [DEscargar](https://expo.dev/go?sdkVersion=51&platform=android&device=true) 
+- 📊 **descarga de aplicacion movil**: deacargar app desde la pagina de expo [Descargar](https://expo.dev/accounts/orekihotaru/projects/redvita/builds/c822cdc0-ccc9-48e0-8c89-d936acb2dc73) 
 ---
 
 ## 🌟 Agradecimientos a Colaboradores, Modelos de inspiracion, Usuarios beta tester
