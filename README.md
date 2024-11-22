@@ -41,7 +41,7 @@
 - 📊 **descarga de aplicacion movil**: deacargar app desde la pagina de expo [Descargar](https://expo.dev/accounts/orekihotaru/projects/redvita/builds/c822cdc0-ccc9-48e0-8c89-d936acb2dc73) 
 ---
 
-## 🌟 Agradecimientos a Colaboradores, Modelos de inspiracion, Usuarios beta tester
+## 🌟 Agradecimientos a Colaboradores, Modelos de inspiracion, Beta tester
 - 📜 [María Cienfuegos](https://github.com/sairacien5)
 - 🐈‍⬛ [Eliab Javier Selva Cruz](https://github.com/eliabjselvacruz)
 - 🦦 [Yesenia Sobeyda](https://github.com/ytellez) 
