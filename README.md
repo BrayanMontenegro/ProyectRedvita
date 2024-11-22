@@ -2,7 +2,7 @@
 
 **Redvita** es una aplicación que conecta a personas y organizaciones con centros de donación cercanos. Facilita la búsqueda y localización de lugares para donar recursos esenciales, promoviendo el bienestar social y comunitario.
 
-## 🌟 Sobre mí
+## 🌟 Equipo de Desarollo
 - 🌐 [**Oreki Hotaru**](https://github.com/BrayanMontenegro) 
 - 🎓 [**Kenny Antonio Téllez**](https://github.com/Atkenny)
 - 🚀 [**Gisela_cruz**](https://github.com/Gisela3876) 
