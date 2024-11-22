@@ -32,7 +32,7 @@
 <div align="center">
   <img src="https://c.tenor.com/y2JXkY1pXkwAAAAC/cat-computer.gif" alt="Cat Coding" width="200">
 </div>
----
+
 
 ## 📂 Pasos de intalacion:
 - 🩸 **Proyecto Redvita**: puedes clonar este repositorio en bash [Ir al repo](https://github.com/BrayanMontenegro/ProyectRedvita.git)
