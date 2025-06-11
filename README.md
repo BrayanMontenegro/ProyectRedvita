@@ -45,7 +45,7 @@
 - 📜 [María Cienfuegos](https://github.com/sairacien5)
 - 🐈‍⬛ [Eliab Javier Selva Cruz](https://github.com/eliabjselvacruz)
 - 🦦 [Yesenia Sobeyda](https://github.com/ytellez) 
-- 🐠 María Ríos
+- 🐠 [María Ríos](https://github.com/mariajorlenis)
 - 🌑 ELizabeth Castillo
 - 🐈 [Roxana Mendoza](https://github.com/Rocsanmenz)
 - 🎮 [Oneyker Galeano](https://github.com/Oneyker21)
